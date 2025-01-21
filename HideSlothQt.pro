@@ -11,6 +11,7 @@ CONFIG += c++17
 
 SOURCES += \
     Encryption.cpp \
+    aboutbox.cpp \
     dialog.cpp \
     main.cpp \
     mainwindow.cpp\
@@ -29,10 +30,12 @@ LIBS += -L$$PWD/ -lcrypto -ldl
 }
 HEADERS += \
     GlobalSettings.h \
+    aboutbox.h \
     dialog.h \
     mainwindow.h
 
 FORMS += \
+    aboutbox.ui \
     dialog.ui \
     mainwindow.ui
 
@@ -40,3 +43,8 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES +=
+
+RESOURCES += \
+    Resources/about.qrc
