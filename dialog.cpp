@@ -23,6 +23,9 @@ Dialog::Dialog(QWidget *parent)
     std::string hash = GlobalSettings::instance().getHash();
     int indexs = ui->comboBox->findText(QString::fromStdString(hash));
     ui->comboBox->setCurrentIndex(indexs);
+    std::string encal = GlobalSettings::instance().getEncalg();
+    int indexe = ui->comboBox_2->findText(QString::fromStdString(encal));
+    ui->comboBox_2->setCurrentIndex(indexe);
 }
 
 Dialog::~Dialog()
@@ -38,5 +41,6 @@ void Dialog::on_buttonBox_accepted()
     GlobalSettings::instance().setCstIter(ui->checkBox->checkState());
     GlobalSettings::instance().setIter(ui->lineEdit->text().toInt());
     GlobalSettings::instance().setHash(ui->comboBox->currentText().toStdString());
+    GlobalSettings::instance().setEncalg(ui->comboBox_2->currentText().toStdString());
     QMessageBox::information(this,QString::fromStdString("Saved"),QString::fromStdString("Settings Saved!"));
 }

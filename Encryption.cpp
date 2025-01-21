@@ -27,6 +27,115 @@ static const EVP_MD* getEvpFunction(const std::string& hashType) {
     }
 }
 
+static bool aes_gcm_encrypt(const unsigned char *plaintext, int plaintext_len,
+                            const unsigned char *aad, int aad_len,
+                            const unsigned char *key, const unsigned char *iv,
+                            unsigned char *ciphertext, unsigned char *tag) {
+
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) return false;
+    int len;
+    int ciphertext_len;
+    if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
+        return false;
+    if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
+        return false;
+    if (!EVP_EncryptUpdate(ctx, NULL, &len, aad, aad_len))
+        return false;
+    if (!EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
+        return false;
+    ciphertext_len = len;
+    if (!EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
+        return false;
+    ciphertext_len += len;
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag))
+        return false;
+    EVP_CIPHER_CTX_free(ctx);
+    return true;
+}
+
+static bool chacha20_poly1305_encrypt(const unsigned char *plaintext, int plaintext_len,
+                                      const unsigned char *aad, int aad_len,
+                                      const unsigned char *key, const unsigned char *iv,
+                                      unsigned char *ciphertext, unsigned char *tag) {
+
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) return false;
+    int len;
+    int ciphertext_len;
+
+    // 初始化加密操作
+    if (!EVP_EncryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL))
+        return false;
+    if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
+        return false;
+
+    // 提供 AAD 数据
+    if (aad && aad_len > 0) {
+        if (!EVP_EncryptUpdate(ctx, NULL, &len, aad, aad_len))
+            return false;
+    }
+
+    // 提供明文数据并加密
+    if (!EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
+        return false;
+    ciphertext_len = len;
+
+    // 完成加密操作
+    if (!EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
+        return false;
+    ciphertext_len += len;
+
+    // 获取TAG值
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag))
+        return false;
+
+    EVP_CIPHER_CTX_free(ctx);
+    return true;
+}
+
+static bool chacha20_poly1305_decrypt(const unsigned char *ciphertext, int ciphertext_len,
+                                      const unsigned char *aad, int aad_len,
+                                      const unsigned char *tag, const unsigned char *key, const unsigned char *iv,
+                                      unsigned char *plaintext) {
+
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) return false;
+    int len;
+    int plaintext_len;
+
+    // 初始化解密操作
+    if (!EVP_DecryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL))
+        return false;
+    if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
+        return false;
+
+    // 提供 AAD 数据
+    if (aad && aad_len > 0) {
+        if (!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len))
+            return false;
+    }
+
+    // 提供密文数据并解密
+    if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+        return false;
+    plaintext_len = len;
+
+    // 设置期望的TAG值
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, (void *)tag))
+        return false;
+
+    // 完成解密操作
+    if (!EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
+    plaintext_len += len;
+
+    EVP_CIPHER_CTX_free(ctx);
+    return true;
+}
+
 static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
                             const unsigned char *aad, int aad_len,
                             const unsigned char *tag, const unsigned char *key, const unsigned char *iv,
@@ -62,33 +171,6 @@ static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
     return true;
 }
 
-static bool aes_gcm_encrypt(const unsigned char *plaintext, int plaintext_len,
-                     const unsigned char *aad, int aad_len,
-                     const unsigned char *key, const unsigned char *iv,
-                     unsigned char *ciphertext, unsigned char *tag) {
-
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    if (!ctx) return false;
-    int len;
-    int ciphertext_len;
-    if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
-        return false;
-    if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
-        return false;
-    if (!EVP_EncryptUpdate(ctx, NULL, &len, aad, aad_len))
-        return false;
-    if (!EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
-        return false;
-    ciphertext_len = len;
-    if (!EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
-        return false;
-    ciphertext_len += len;
-    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag))
-        return false;
-    EVP_CIPHER_CTX_free(ctx);
-    return true;
-}
-
 static std::vector<unsigned char> dec(const unsigned char *ciphertext, const char *password, int ciphertexyLength){
     if (ciphertexyLength < 44) {
         // 处理错误情况
@@ -105,11 +187,22 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
     const int keyLength = 32;
     std::vector<unsigned char> key(keyLength);
     const EVP_MD* md = getEvpFunction(GlobalSettings::instance().getHash());
-    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), result.salt.size(), GlobalSettings::instance().getIter(), md, keyLength, key.data()) != 1) {qDebug() << "Failure in PBKDF2";}
-    if (aes_gcm_decrypt(result.ciphertext.data(), ciphertexyLength-44, nullptr, 0,result.tag.data(), key.data(), result.iv.data(), result.ciphertext.data())) {
-        std::cout << "Decryption succeeded." << std::endl;
-    } else {
-        std::cout << "Decryption failed." << std::endl;
+    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), result.salt.size(), GlobalSettings::instance().getIter(), md, keyLength, key.data()) != 1) {
+        qDebug() << "Failure in PBKDF2";
+    }
+    if (GlobalSettings::instance().getEncalg() == "AES256-GCM"){
+        if (aes_gcm_decrypt(result.ciphertext.data(), ciphertexyLength-44, nullptr, 0,result.tag.data(), key.data(), result.iv.data(), result.ciphertext.data())) {
+            std::cout << "Decryption succeeded." << std::endl;
+        } else {
+            std::cout << "Decryption failed." << std::endl;
+        }
+    }
+    if (GlobalSettings::instance().getEncalg() == "ChaCha20-Poly1305"){
+        if (chacha20_poly1305_decrypt(result.ciphertext.data(), ciphertexyLength-44, nullptr, 0,result.tag.data(), key.data(), result.iv.data(), result.ciphertext.data())) {
+            std::cout << "Decryption succeeded." << std::endl;
+        } else {
+            std::cout << "Decryption failed." << std::endl;
+        }
     }
     std::vector<uint8_t> vectorData(result.ciphertext.data(), result.ciphertext.data() + result.ciphertext.size());
     return vectorData;
@@ -135,11 +228,21 @@ static EncryptedData enc(const unsigned char *plaintext, const char *password, i
         qDebug() << "Failure in PBKDF2";
     }
     // 加密操作
-    if (aes_gcm_encrypt(plaintext, plaintextLength, nullptr, 0, key.data(), result.iv.data(), result.ciphertext.data(), result.tag.data())) {
-        std::cout << "Encryption succeeded." << std::endl;
-    } else {
-        std::cout << "Encryption failed." << std::endl;
-        result.ciphertext.resize(0); // 如果加密失败，清空密文
+    if (GlobalSettings::instance().getEncalg() == "AES256-GCM"){
+        if (aes_gcm_encrypt(plaintext, plaintextLength, nullptr, 0, key.data(), result.iv.data(), result.ciphertext.data(), result.tag.data())) {
+            std::cout << "Encryption succeeded." << std::endl;
+        } else {
+            std::cout << "Encryption failed." << std::endl;
+            result.ciphertext.resize(0); // 如果加密失败，清空密文
+        }
+    }
+    if (GlobalSettings::instance().getEncalg() == "ChaCha20-Poly1305"){
+        if (chacha20_poly1305_encrypt(plaintext, plaintextLength, nullptr, 0, key.data(), result.iv.data(), result.ciphertext.data(), result.tag.data())) {
+            std::cout << "Encryption succeeded." << std::endl;
+        } else {
+            std::cout << "Encryption failed." << std::endl;
+            result.ciphertext.resize(0); // 如果加密失败，清空密文
+        }
     }
     return result;
 }

@@ -23,6 +23,8 @@ public:
     void setCstHash(bool newcsthash) {csthash = newcsthash;}
     std::string getHash() const {return hash;}
     void setHash(std::string newhash){hash = newhash;}
+    std::string getEncalg() const{return encalg;}
+    void setEncalg(std::string newencalg){encalg = newencalg;}
     // Delete copy constructor and assignment operator
     GlobalSettings(GlobalSettings const&) = delete;
     void operator=(GlobalSettings const&) = delete;
