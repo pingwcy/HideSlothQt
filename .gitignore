@@ -52,3 +52,5 @@ compile_commands.json
 *creator.user*
 
 *_qmlcache.qrc
+include/* linguist-vendored
+include/openssl/* linguist-vendored
