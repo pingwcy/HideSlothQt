@@ -19,9 +19,8 @@ SOURCES += \
 
 
 win32 {
-LIBS += -L$$PWD/ -llibcrypto
-INCLUDEPATH += D:\InformationCenter\Qt\OpenSSLv3\Win_x64\include
-LIBS += -lcrypt32 -luser32 -ladvapi32 -lkernel32
+INCLUDEPATH += $$PWD/include
+LIBS += -L$$PWD/lib/ -llibcrypto -lcrypt32 -luser32 -ladvapi32 -lkernel32
 
 }
 unix:!macx{
