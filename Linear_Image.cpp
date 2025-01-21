@@ -1,4 +1,4 @@
-//#include <iostream>
+#include <iostream>
 #include <vector>
 #include <cmath>
 #include <cstdint>
@@ -44,14 +44,15 @@ public:
         return {static_cast<uint8_t>(red), static_cast<uint8_t>(green), static_cast<uint8_t>(blue)};
     }
 
-
     static std::vector<uint8_t> Decode(QImage img) {
         // 确保图像是以正确的格式
-        if (img.format() != QImage::Format_RGB32 && img.format() != QImage::Format_ARGB32) {
+        if (img.format() != QImage::Format_ARGB32) {
             img = img.convertToFormat(QImage::Format_ARGB32);
         }
+
         int bytes = img.sizeInBytes();
         std::vector<uint8_t> rgbValues(img.bits(), img.bits() + bytes);
+
         int maxLinear = img.width() * img.height();
         int c = 0;
         std::vector<char> binaryCharArray(32);
@@ -63,9 +64,9 @@ public:
             count++;
             c++;
         }
-
         std::string binaryString(binaryCharArray.begin(), binaryCharArray.end());
         int fileLength = std::stoi(binaryString, nullptr, 2);
+
         std::vector<uint8_t> fileData;
         fileData.reserve(fileLength);
         for (int i = 0; i < fileLength; i++) {
@@ -73,6 +74,7 @@ public:
             fileData.push_back(static_cast<uint8_t>(DecodePixelFromArray(rgbValues, point, img.width(), img.bytesPerLine())));
             c++;
         }
+
         return fileData;
     }
 
@@ -90,20 +92,24 @@ public:
 
     static void Encode(QImage* img, const std::vector<uint8_t>& data) {
         // 确保图像是以正确的格式
-        if (img->format() != QImage::Format_RGB32 && img->format() != QImage::Format_ARGB32) {
+        if (img->format() != QImage::Format_ARGB32) {
             *img = img->convertToFormat(QImage::Format_ARGB32);
         }
+
         int bytes = img->sizeInBytes();
         std::vector<uint8_t> rgbValues;
         rgbValues.reserve(bytes);
+
         // 获取图像数据的首地址
         uint8_t* ptr = img->bits();
         int stride = img->bytesPerLine();
+
         // 将像素数据复制到数组
         std::memcpy(rgbValues.data(), ptr, bytes);
         int c = 0;
         //int maxLinear = img->width() * img->height();
         size_t maxLinear = static_cast<size_t>(img->width()) * static_cast<size_t>(img->height());
+
         if (data.size() < maxLinear) {
             std::string binaryString = std::bitset<32>(data.size()).to_string(); // 转换为二制字符串，左侧填充零以达到 32 位
             std::vector<char> binaryCharArray(binaryString.begin(), binaryString.end()); // 将二进制字符串转换为字符组
@@ -138,3 +144,5 @@ public:
         return std::round(img.width() * img.height() / 1024 * 0.97);
     }
 };
+
+
