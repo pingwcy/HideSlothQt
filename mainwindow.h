@@ -26,6 +26,8 @@ private slots:
     void on_actionSelect_Container_triggered();
     void on_actionSelect_Secret_triggered();
 
+    void on_actionAbout_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

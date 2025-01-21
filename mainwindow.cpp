@@ -1,11 +1,13 @@
 #include "mainwindow.h"
 #include "dialog.h"
+#include "aboutbox.h"
 #include "ui_mainwindow.h"
+//#include "ui_aboutbox.h"
 //#include "ui_dialog.h"
 #include <QMessageBox>
 #include <string>
-#include <iostream>
-#include <fstream>
+//#include <iostream>
+//#include <fstream>
 #include <QLabel>
 #include "Linear_Image.cpp"
 #include <QFile>
@@ -258,4 +260,10 @@ void MainWindow::on_actionSelect_Secret_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open File"));
     ui->Secret_Text->setText(fileName);
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    AboutBox *aboutbox = new AboutBox();
+    aboutbox->exec();
 }

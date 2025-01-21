@@ -36,6 +36,7 @@ private:
     bool cstiter = false;
     bool csthash = false;
     std::string hash = "SHA256";
+    std::string encalg = "AES256-GCM";
 };
 
 #endif // GLOBALSETTINGS_H
