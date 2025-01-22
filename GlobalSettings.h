@@ -11,6 +11,9 @@ public:
         return instance;
     }
 
+    int getDefIter() const{return defiter;}
+    std::string getDefhash() const {return defhash; }
+
     int getIter() const { return iter; }
     void setIter(int newValue) { iter = newValue; }
     bool getMode() const {return mode;}
@@ -31,7 +34,11 @@ public:
 
 private:
     GlobalSettings() {} // Constructor? (the {} brackets) are needed here.
-    // The global state
+    // The default PBKDF2 parameters
+    int defiter = 100000;
+    std::string defhash = "SHA256";
+
+    //The settings parameters
     int iter = 100000;
     bool mode = true;
     bool enc = true;

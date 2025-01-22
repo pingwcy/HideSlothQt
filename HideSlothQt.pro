@@ -20,8 +20,9 @@ SOURCES += \
 
 win32 {
 INCLUDEPATH += $$PWD/include
+### The first line is static build, the second line is dynamic!
 LIBS += -L$$PWD/lib/ -llibcrypto -lcrypt32 -luser32 -ladvapi32 -lkernel32
-
+#LIBS += -L$$PWD/lib/ -llibcryptosym
 }
 unix:!macx{
 LIBS += -L$$PWD/ -lcrypto -ldl

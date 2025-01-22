@@ -186,8 +186,21 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
     result.ciphertext = std::vector<unsigned char>(ciphertext + 44, ciphertext + ciphertexyLength);
     const int keyLength = 32;
     std::vector<unsigned char> key(keyLength);
-    const EVP_MD* md = getEvpFunction(GlobalSettings::instance().getHash());
-    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), result.salt.size(), GlobalSettings::instance().getIter(), md, keyLength, key.data()) != 1) {
+    const EVP_MD* md;
+    int iterc;
+    if (GlobalSettings::instance().getCstHash()){
+        md = getEvpFunction(GlobalSettings::instance().getHash());
+    }
+    else{
+        md = getEvpFunction(GlobalSettings::instance().getDefhash());
+    }
+    if (GlobalSettings::instance().getCstIter()){
+        iterc = GlobalSettings::instance().getIter();
+    }
+    else{
+        iterc = GlobalSettings::instance().getDefIter();
+    }
+    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), result.salt.size(), iterc, md, keyLength, key.data()) != 1) {
         qDebug() << "Failure in PBKDF2";
     }
     if (GlobalSettings::instance().getEncalg() == "AES256-GCM"){
@@ -223,8 +236,21 @@ static EncryptedData enc(const unsigned char *plaintext, const char *password, i
     // 密钥派生
     const int keyLength = 32;
     std::vector<unsigned char> key(keyLength);
-    const EVP_MD* md = getEvpFunction(GlobalSettings::instance().getHash());
-    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), result.salt.size(), GlobalSettings::instance().getIter(), md, keyLength, key.data()) != 1) {
+    const EVP_MD* md;
+    int iterc;
+    if (GlobalSettings::instance().getCstHash()){
+        md = getEvpFunction(GlobalSettings::instance().getHash());
+        }
+    else{
+        md = getEvpFunction(GlobalSettings::instance().getDefhash());
+        }
+    if (GlobalSettings::instance().getCstIter()){
+        iterc = GlobalSettings::instance().getIter();
+        }
+    else{
+        iterc = GlobalSettings::instance().getDefIter();
+        }
+    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), result.salt.size(), iterc, md, keyLength, key.data()) != 1) {
         qDebug() << "Failure in PBKDF2";
     }
     // 加密操作
