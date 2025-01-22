@@ -9,48 +9,6 @@ on:
       - main
 
 jobs:
-  # Linux 环境构建和测试
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-    # 检出代码
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    # 设置Qt环境
-- name: Install Qt on Linux
-  run: |
-    sudo apt-get update
-    sudo apt-get install -y software-properties-common
-    sudo add-apt-repository -y ppa:beineri/opt-qt-5.15.16-focal
-    sudo apt-get update
-    sudo apt-get install -y qt515base qt515tools
-  env:
-    QT_VERSION: '5.15.16' # 你可以根据需要设置版本
-
-    # 安装qmake（如果需要）
-    - name: Install Qmake
-      run: sudo apt-get install -y qt5-qmake
-
-    # 运行qmake
-    - name: Run Qmake
-      run: qmake CONFIG+=release
-
-    # 构建项目
-    - name: Build
-      run: make
-
-    # 可选：运行测试
-    - name: Run Tests
-      run: ./tests/HideSlothQt
-
-  # Windows 环境构建和测试
-  build-windows:
-    runs-on: windows-latest
-    steps:
-    # 检出代码
-    - name: Checkout Code
-      uses: actions/checkout@v3
 
     # 设置Qt环境
 - name: Install Qt on Windows
