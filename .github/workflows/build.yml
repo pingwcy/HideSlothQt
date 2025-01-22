@@ -18,12 +18,15 @@ jobs:
       uses: actions/checkout@v3
 
     # 设置Qt环境
-    - name: Install Qt on Linux
-      run: sudo apt-get install -y qt5-default qt5-qmake
-      with:
-        version: '5.15.16' # 指定需要的Qt版本
-        host: 'linux'
-        target: 'desktop'
+- name: Install Qt on Linux
+  run: |
+    sudo apt-get update
+    sudo apt-get install -y software-properties-common
+    sudo add-apt-repository -y ppa:beineri/opt-qt-5.15.16-focal
+    sudo apt-get update
+    sudo apt-get install -y qt515base qt515tools
+  env:
+    QT_VERSION: '5.15.16' # 你可以根据需要设置版本
 
     # 安装qmake（如果需要）
     - name: Install Qmake
@@ -39,7 +42,7 @@ jobs:
 
     # 可选：运行测试
     - name: Run Tests
-      run: ./tests/HideSlothQt # 替换为你的测试可执行文件路径
+      run: ./tests/HideSlothQt
 
   # Windows 环境构建和测试
   build-windows:
@@ -50,12 +53,9 @@ jobs:
       uses: actions/checkout@v3
 
     # 设置Qt环境
-    - name: Install Qt on Windows
-      run: choco install qt5-default
-      with:
-        version: '5.15.16'
-        host: 'windows'
-        target: 'desktop'
+- name: Install Qt on Windows
+  run: |
+    choco install qt --version=5.15.16 -y
 
     # 配置环境变量（确保路径包含Qt工具）
     - name: Add Qt to PATH
@@ -73,4 +73,4 @@ jobs:
 
     # 可选：运行测试
     - name: Run Tests
-      run: .\tests\HideSlothQt.exe # 替换为你的测试可执行文件路径
+      run: .\tests\HideSlothQt.exe 
