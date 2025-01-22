@@ -1,0 +1,76 @@
+name: Qt Qmake Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # Linux 环境构建和测试
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    # 检出代码
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 设置Qt环境
+    - name: Set up Qt
+      uses: jurplel/setup-qt-action@v3
+      with:
+        version: '5.15.16' # 指定需要的Qt版本
+        host: 'linux'
+        target: 'desktop'
+
+    # 安装qmake（如果需要）
+    - name: Install Qmake
+      run: sudo apt-get install -y qt5-qmake
+
+    # 运行qmake
+    - name: Run Qmake
+      run: qmake CONFIG+=release
+
+    # 构建项目
+    - name: Build
+      run: make
+
+    # 可选：运行测试
+    - name: Run Tests
+      run: ./tests/test_executable # 替换为你的测试可执行文件路径
+
+  # Windows 环境构建和测试
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    # 检出代码
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 设置Qt环境
+    - name: Set up Qt
+      uses: jurplel/setup-qt-action@v3
+      with:
+        version: '5.15.16'
+        host: 'windows'
+        target: 'desktop'
+
+    # 配置环境变量（确保路径包含Qt工具）
+    - name: Add Qt to PATH
+      run: |
+        echo "C:\Qt\5.15.16\msvc2019_64\bin" >> $Env:Path
+      shell: powershell
+
+    # 运行qmake
+    - name: Run Qmake
+      run: qmake CONFIG+=release
+
+    # 构建项目
+    - name: Build
+      run: nmake
+
+    # 可选：运行测试
+    - name: Run Tests
+      run: .\tests\test_executable.exe # 替换为你的测试可执行文件路径
