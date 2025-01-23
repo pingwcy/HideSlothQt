@@ -4,6 +4,9 @@ QT       += concurrent
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
+#The next two lines are for MSVC static link
+QMAKE_CXXFLAGS_RELEASE += -MT
+QMAKE_CFLAGS_RELEASE += -MT
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
