@@ -13,6 +13,7 @@ QMAKE_CFLAGS_RELEASE += -MT
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    DCT.cpp \
     Encryption.cpp \
     aboutbox.cpp \
     dialog.cpp \
@@ -23,6 +24,8 @@ SOURCES += \
 
 win32 {
 INCLUDEPATH += $$PWD/include
+INCLUDEPATH += $$PWD/include/jpeglib
+
 ### The first line is static build, the second line is dynamic!
 LIBS += -L$$PWD/lib/ -llibcrypto -lcrypt32 -luser32 -ladvapi32 -lkernel32
 #LIBS += -L$$PWD/lib/ -llibcryptosym
