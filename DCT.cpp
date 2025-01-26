@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <jpeglib.h>
+#include <jpeglibsrc/jpeglib.h>
 //#include <stdlib.h>
 #include <qfile.h>
 #include <QTextStream>
@@ -13,11 +13,16 @@
 #include <array>
 #include <cstdio>
 #include <cstring>
-#include <jpeglib.h>
+#include <cstdint>
+#include <bitset>
 
 class DCT{
 public:
-    struct jpeg_decompress_struct read_dct_coefficients(const char* filename,
+    void forceLink() {
+        jpeg_create_decompress(nullptr);  // 强制链接 jpeg_create_compress 函数
+    }
+
+    static struct jpeg_decompress_struct read_dct_coefficients(const char* filename,
                                                                     std::vector<std::vector<std::vector<std::array<short, 64>>>>& dct_coefficients) {
         struct jpeg_decompress_struct cinfo;
         struct jpeg_error_mgr jerr;
@@ -63,7 +68,7 @@ public:
         return cinfo; // 返回解压缩结构
     }
 
-    void process_dct_coefficients(std::vector<std::vector<std::vector<std::array<short, 64>>>>& dct_coefficients, const std::vector<uint8_t>& data) {
+    static void process_dct_coefficients(std::vector<std::vector<std::vector<std::array<short, 64>>>>& dct_coefficients, const std::vector<uint8_t>& data) {
         // 此方法仅为接口，用户可在此实现具体逻辑
         // 例如修改特定的DCT系数
         // Step 1: Convert `data` into a binary stream of 0s and 1s
@@ -108,7 +113,7 @@ public:
 
     }
 
-    void write_dct_coefficients(const char* output_filename,
+    static void write_dct_coefficients(const char* output_filename,
                                             const std::vector<std::vector<std::vector<std::array<short, 64>>>>& dct_coefficients,
                                             struct jpeg_decompress_struct& srcinfo) {
         struct jpeg_compress_struct cinfo;
@@ -146,7 +151,7 @@ public:
         fclose(outfile);
     }
 
-    void encode_image(const char* input_filename, const char* output_filename, const std::vector<uint8_t>& data) {
+    static void encode_image(const char* input_filename, const char* output_filename, const std::vector<uint8_t>& data) {
         std::vector<std::vector<std::vector<std::array<short, 64>>>> dct_coefficients;
         struct jpeg_decompress_struct srcinfo = read_dct_coefficients(input_filename, dct_coefficients);
 
@@ -159,7 +164,7 @@ public:
         jpeg_destroy_decompress(&srcinfo);
     }
 
-    void decode_image(const char* input_filename, std::vector<uint8_t>& data){
+    static void decode_image(const char* input_filename, std::vector<uint8_t>& data){
         std::vector<std::vector<std::vector<std::array<short, 64>>>> dct_coefficients;
         read_dct_coefficients(input_filename, dct_coefficients);
         uint16_t length = 0;
@@ -179,7 +184,7 @@ public:
         }
 
     done_length:
-        length+=2;
+        //length+=2;
         // Step 2: Read the subsequent bits based on the extracted length
         //std::vector<uint8_t> data;
         uint8_t current_byte = 0;

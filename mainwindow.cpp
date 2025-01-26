@@ -19,7 +19,7 @@
 #include "Encryption.cpp"
 #include <QDialog>
 #include "GlobalSettings.h"
-
+#include <DCT.cpp>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -62,7 +62,6 @@ void MainWindow::on_pushButton_2_clicked()
     bool Isstring = ui->radioButton_4->isChecked();
     // 根据需要处理这些值
     if (Encode && GlobalSettings::instance().getMode()){
-        QImage image(ContainerRoute);
         QByteArray utf8Text = PlainText.toUtf8(); // 将QString转换为QByteArray
         if (File && !Isstring){
             QFile file(SecretRoute); // 替换为你的文件路径
@@ -80,18 +79,40 @@ void MainWindow::on_pushButton_2_clicked()
         int dataLength = static_cast<int>(data.size());
         if (GlobalSettings::instance().getEnc()){
             Encryption::EncryptedData encryptedData = Encryption::enc(dataPtr,passwordPtr,dataLength);
-            QtConcurrent::run(&Linear_Image::Encode, &image, encryptedDataToVector(encryptedData));
+            if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
+                QImage image(ContainerRoute);
+                QtConcurrent::run(&Linear_Image::Encode, &image, encryptedDataToVector(encryptedData));
+                QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
+                image.save(fileName,"PNG");
+            }
+            if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
+                QString fileName2 = QFileDialog::getSaveFileName(this,tr("Save File"));
+                DCT::encode_image(ContainerRoute.toLocal8Bit().constData(), fileName2.toLocal8Bit().constData(),encryptedDataToVector(encryptedData));
+            }
         }
         else {
-            QtConcurrent::run(&Linear_Image::Encode, &image, data);
+            if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
+                QImage image(ContainerRoute);
+                QtConcurrent::run(&Linear_Image::Encode, &image, data);
+                QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
+                image.save(fileName,"PNG");
+            }
+            if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
+                QString fileName2 = QFileDialog::getSaveFileName(this,tr("Save File"));
+                DCT::encode_image(ContainerRoute.toLocal8Bit().constData(), fileName2.toLocal8Bit().constData(),data);
+            }
         }
-        QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
-        image.save(fileName,"PNG");
         QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("Succes Encode and save!"));
     }
     else if (Decode && GlobalSettings::instance().getMode()){
-        QImage image(ContainerRoute);
-        std::vector<uint8_t> extractDataraw = Linear_Image::Decode(image);
+        std::vector<uint8_t> extractDataraw;
+        if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
+            QImage image(ContainerRoute);
+            extractDataraw = Linear_Image::Decode(image);
+        }
+        if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
+            DCT::decode_image(ContainerRoute.toLocal8Bit().constData(), extractDataraw);
+        }
         if (GlobalSettings::instance().getEnc()){
             const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(extractDataraw.data());
             extractDataraw = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(extractDataraw.size()));

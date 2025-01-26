@@ -32,6 +32,9 @@ public:
     GlobalSettings(GlobalSettings const&) = delete;
     void operator=(GlobalSettings const&) = delete;
 
+    std::string getStealg() const {return stealg;}
+    void setStealg(std::string newStealg){stealg = newStealg;}
+
 private:
     GlobalSettings() {} // Constructor? (the {} brackets) are needed here.
     // The default PBKDF2 parameters
@@ -46,6 +49,7 @@ private:
     bool csthash = false;
     std::string hash = "SHA256";
     std::string encalg = "AES256-GCM";
+    std::string stealg = "JPG-DCT";
 };
 
 #endif // GLOBALSETTINGS_H

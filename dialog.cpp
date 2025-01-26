@@ -26,6 +26,10 @@ Dialog::Dialog(QWidget *parent)
     std::string encal = GlobalSettings::instance().getEncalg();
     int indexe = ui->comboBox_2->findText(QString::fromStdString(encal));
     ui->comboBox_2->setCurrentIndex(indexe);
+    std::string stgal = GlobalSettings::instance().getStealg();
+    int indexf = ui->comboBox_3->findText(QString::fromStdString(stgal));
+    ui->comboBox_3->setCurrentIndex(indexf);
+
 }
 
 Dialog::~Dialog()
@@ -42,5 +46,6 @@ void Dialog::on_buttonBox_accepted()
     GlobalSettings::instance().setIter(ui->lineEdit->text().toInt());
     GlobalSettings::instance().setHash(ui->comboBox->currentText().toStdString());
     GlobalSettings::instance().setEncalg(ui->comboBox_2->currentText().toStdString());
+    GlobalSettings::instance().setStealg(ui->comboBox_3->currentText().toStdString());
     QMessageBox::information(this,QString::fromStdString("Saved"),QString::fromStdString("Settings Saved!"));
 }
