@@ -28,6 +28,8 @@ private slots:
 
     void on_actionAbout_triggered();
 
+    void on_actionDCT_Cof_Reader_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

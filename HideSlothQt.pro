@@ -25,6 +25,7 @@ SOURCES += \
     DCT.cpp \
     Encryption.cpp \
     aboutbox.cpp \
+    dctreader.cpp \
     dialog.cpp \
     main.cpp \
     mainwindow.cpp\
@@ -34,11 +35,13 @@ SOURCES += \
 HEADERS += \
     GlobalSettings.h \
     aboutbox.h \
+    dctreader.h \
     dialog.h \
     mainwindow.h
 
 FORMS += \
     aboutbox.ui \
+    dctreader.ui \
     dialog.ui \
     mainwindow.ui
 

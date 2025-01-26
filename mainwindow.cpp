@@ -20,6 +20,7 @@
 #include <QDialog>
 #include "GlobalSettings.h"
 #include <DCT.cpp>
+#include <dctreader.h>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -288,3 +289,10 @@ void MainWindow::on_actionAbout_triggered()
     AboutBox *aboutbox = new AboutBox();
     aboutbox->exec();
 }
+
+void MainWindow::on_actionDCT_Cof_Reader_triggered()
+{
+    dctreader *dctreader1 = new dctreader();
+    dctreader1->show();
+}
+

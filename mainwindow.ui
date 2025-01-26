@@ -330,6 +330,7 @@
     <property name="title">
      <string>Tools</string>
     </property>
+    <addaction name="actionDCT_Cof_Reader"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -366,6 +367,11 @@
   <action name="actionSelect_Secret">
    <property name="text">
     <string>Select Secret</string>
+   </property>
+  </action>
+  <action name="actionDCT_Cof_Reader">
+   <property name="text">
+    <string>DCT Cof Reader</string>
    </property>
   </action>
  </widget>
