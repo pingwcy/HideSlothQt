@@ -8,7 +8,7 @@
 #include <QStringBuilder>
 #include <vector>
 #include <cstdint>
-#include <jpeglibsrc/jpeglib.h>
+#include <qtlibjpeg/jpeglib.h>
 
 dctreader::dctreader(QWidget *parent)
     : QWidget(parent)

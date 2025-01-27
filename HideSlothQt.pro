@@ -15,7 +15,7 @@ QMAKE_CFLAGS_RELEASE += -MT
 
 win32 {
 INCLUDEPATH += $$PWD\include
-LIBS += -L$$PWD/lib/ -llibjpegstandalone -llibcryptostandalone -lcrypt32 -luser32 -ladvapi32 -lkernel32
+LIBS += -L$$PWD/lib/ -llibcryptostandalone -lcrypt32 -luser32 -ladvapi32 -lkernel32
 }
 unix:!macx{
 LIBS += -L$$PWD/ -lcrypto -ldl

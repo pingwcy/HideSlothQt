@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <jpeglibsrc/jpeglib.h>
-//#include <stdlib.h>
+//#include <jpeglibsrc/jpeglib.h>
+#include <qtlibjpeg/jpeglib.h>
 #include <qfile.h>
 #include <QTextStream>
 #include <QString>

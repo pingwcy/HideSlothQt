@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/new/prefix1">
         <file>logo.ico</file>
-        <file>about.png</file>
+        <file>about.jpg</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

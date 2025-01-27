@@ -6,7 +6,7 @@ AboutBox::AboutBox(QWidget *parent)
     , ui(new Ui::AboutBox)
 {
     ui->setupUi(this);
-    aboutpic.load(":/new/prefix1/about.png");
+    aboutpic.load(":/new/prefix1/about.jpg");
     ui->label_5->setPixmap(aboutpic);
     ui->label_5->setScaledContents(true);
 }
