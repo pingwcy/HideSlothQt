@@ -119,7 +119,7 @@ void MainWindow::on_pushButton_2_clicked()
             extractDataraw = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(extractDataraw.size()));
         }
         if (File && !Isstring){
-            QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), extractDataraw.size());
+            QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size()));
             QString Filename = "";
             int splitIndex = byteData.indexOf('|'); // 查找 '|' 的位置
             if (splitIndex != -1) { // 如果找到 '|'
@@ -134,7 +134,7 @@ void MainWindow::on_pushButton_2_clicked()
             file.close();
         }
         else{
-            ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(extractDataraw.data()), extractDataraw.size()));
+            ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size())));
         }
         QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("Success Decode!"));
     }
@@ -155,7 +155,7 @@ void MainWindow::on_pushButton_2_clicked()
         const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
         int dataLength = static_cast<int>(data.size());
         Encryption::EncryptedData encryptedData = Encryption::enc(dataPtr,passwordPtr,dataLength);
-        QByteArray byteArray(reinterpret_cast<const char*>(encryptedDataToVector(encryptedData).data()), encryptedDataToVector(encryptedData).size());
+        QByteArray byteArray(reinterpret_cast<const char*>(encryptedDataToVector(encryptedData).data()), static_cast<int>(encryptedDataToVector(encryptedData).size()));
         if (File && !Isstring){
             QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
             QFile file(fileName);
@@ -186,7 +186,7 @@ void MainWindow::on_pushButton_2_clicked()
             //const std::vector<uint8_t> *extractDataraw = reinterpret_cast<const uint8_t *>(byteDatar.constData());
             const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(extractDataraw.data());
             extractDataraw = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(extractDataraw.size()));
-            QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), extractDataraw.size());
+            QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size()));
             QString Filename = "";
             int splitIndex = byteData.indexOf('|'); // 查找 '|' 的位置
             if (splitIndex != -1) { // 如果找到 '|'
@@ -207,7 +207,7 @@ void MainWindow::on_pushButton_2_clicked()
             std::vector<uint8_t> dataVector(decodedData.begin(), decodedData.end());
             const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(dataVector.data());
             dataVector = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(dataVector.size()));
-            ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(dataVector.data()), dataVector.size()));
+            ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(dataVector.data()), static_cast<int>(dataVector.size())));
         }
     }
 }

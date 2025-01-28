@@ -14,8 +14,8 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
-#include <bitset>
-
+//#include <bitset>
+#include <QDebug>
 class DCT{
 public:
     void forceLink() {
@@ -27,10 +27,13 @@ public:
         struct jpeg_decompress_struct cinfo;
         struct jpeg_error_mgr jerr;
 
-        FILE* infile = fopen(filename, "rb");
-        if (!infile) {
-            std::cerr << "Error opening file: " << std::strerror(errno) << std::endl;
-            // 可根据需求做更详细的错误处理
+        FILE* infile = nullptr; // 必须先初始化为 nullptr
+        errno_t err = fopen_s(&infile, filename, "rb");
+        if (err != 0) {
+            // 打开文件失败，处理错误
+            qDebug() << "Failed to open file";
+        } else {
+            // 文件打开成功，可以继续操作
         }
 
         cinfo.err = jpeg_std_error(&jerr);
@@ -47,14 +50,14 @@ public:
             jpeg_component_info* comp_info = &cinfo.comp_info[comp];
             dct_coefficients[comp].resize(comp_info->height_in_blocks);
 
-            for (int row = 0; row < comp_info->height_in_blocks; row++) {
+            for (unsigned int row = 0; row < comp_info->height_in_blocks; row++) {
                 JBLOCKARRAY coef_blocks = (cinfo.mem->access_virt_barray)(
                     (j_common_ptr)&cinfo, coef_arrays[comp], row, 1, FALSE);
 
                 std::vector<std::array<short, 64>> row_blocks;
                 row_blocks.reserve(comp_info->width_in_blocks);
 
-                for (int col = 0; col < comp_info->width_in_blocks; col++) {
+                for (unsigned int col = 0; col < comp_info->width_in_blocks; col++) {
                     std::array<short, 64> new_block;
                     std::memcpy(new_block.data(), coef_blocks[0][col], sizeof(new_block));
                     row_blocks.push_back(new_block);
@@ -119,10 +122,13 @@ public:
         struct jpeg_compress_struct cinfo;
         struct jpeg_error_mgr jerr;
 
-        FILE* outfile = fopen(output_filename, "wb");
-        if (!outfile) {
-            std::cerr << "Error opening file: " << std::strerror(errno) << std::endl;
-            return;
+        FILE* outfile = nullptr; // 必须先初始化为 nullptr
+        errno_t err = fopen_s(&outfile, output_filename, "wb");
+        if (err != 0) {
+            // 打开文件失败，处理错误
+            qDebug() << "Failed to open file";
+        } else {
+            // 文件打开成功，可以继续操作
         }
 
         cinfo.err = jpeg_std_error(&jerr);
@@ -136,10 +142,10 @@ public:
 
         for (int comp = 0; comp < cinfo.num_components; comp++) {
             jpeg_component_info* comp_info = &cinfo.comp_info[comp];
-            for (int row = 0; row < comp_info->height_in_blocks; row++) {
+            for (unsigned int row = 0; row < comp_info->height_in_blocks; row++) {
                 JBLOCKARRAY coef_blocks = (cinfo.mem->access_virt_barray)(
                     (j_common_ptr)&cinfo, coef_arrays_from_srcinfo[comp], row, 1, TRUE);
-                for (int col = 0; col < comp_info->width_in_blocks; col++) {
+                for (unsigned int col = 0; col < comp_info->width_in_blocks; col++) {
                     const std::array<short, 64>& block = dct_coefficients[comp][row][col];
                     std::memcpy(coef_blocks[0][col], block.data(), sizeof(std::array<short, 64>));
                 }

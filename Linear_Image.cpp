@@ -1,4 +1,4 @@
-#include <iostream>
+//#include <iostream>
 #include <vector>
 #include <cmath>
 #include <cstdint>
@@ -28,6 +28,7 @@ public:
     }
 
     static Point LinearIndexToPoint(int index, int width, int height) {
+        (void) height;
         if (index < 0) {
             index *= -1;
         }
@@ -79,6 +80,7 @@ public:
     }
 
     static int DecodePixelFromArray(const std::vector<uint8_t>& rgbValues, Point point, int width, int stride) {
+        (void) width;
         int index = point.Y * stride + point.X * 3; // 每个像素4字节
         int blue = rgbValues[index];
         int green = rgbValues[index + 1];
@@ -131,6 +133,7 @@ public:
     }
 
     static void EncodePixelToArray(std::vector<uint8_t>& rgbValues, Point point, int value, int width, int stride) {
+        (void) width;
         int index = point.Y * stride + point.X * 3; // 每个像素4字节
         int blueValue = value & 7;
         int greenValue = (value >> 3) & 7;

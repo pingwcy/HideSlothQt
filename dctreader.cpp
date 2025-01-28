@@ -6,10 +6,10 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QStringBuilder>
-#include <vector>
-#include <cstdint>
+//#include <vector>
+//#include <cstdint>
 #include <qtlibjpeg/jpeglib.h>
-
+#include <QDebug>
 dctreader::dctreader(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::dctreader)
@@ -52,11 +52,13 @@ void dctreader::on_pushButton_3_clicked()
     struct jpeg_error_mgr jerr;
 
     // 打开 JPEG 文件
-    FILE* infile = fopen(jpegrr.toLocal8Bit().constData(), "rb");
-    if (!infile) {
-        //QMessageBox::critical(this, "Error", QString("Error opening file: %1").arg(strerror(errno)));
-        file.close();
-        return;
+    FILE* infile = nullptr; // 必须先初始化为 nullptr
+    errno_t err = fopen_s(&infile, jpegrr.toLocal8Bit().constData(), "rb");
+    if (err != 0) {
+        // 打开文件失败，处理错误
+        qDebug() << "Failed to open file";
+    } else {
+        // 文件打开成功，可以继续操作
     }
 
     cinfo.err = jpeg_std_error(&jerr);
@@ -76,10 +78,10 @@ void dctreader::on_pushButton_3_clicked()
 
     for (int comp = 0; comp < cinfo.num_components; comp++) {
         jpeg_component_info* comp_info = &cinfo.comp_info[comp];
-        for (int row = 0; row < comp_info->height_in_blocks; row++) {
+        for (unsigned int row = 0; row < comp_info->height_in_blocks; row++) {
             coef_blocks = (cinfo.mem->access_virt_barray)(
                 (j_common_ptr)&cinfo, coef_arrays[comp], row, 1, FALSE);
-            for (int col = 0; col < comp_info->width_in_blocks; col++) {
+            for (unsigned int col = 0; col < comp_info->width_in_blocks; col++) {
                 block = coef_blocks[0] + col;
                 // 使用 QStringBuilder 进行字符串拼接
                 outputText += QStringLiteral("Component %1 Block(%2,%3): ").arg(comp).arg(row).arg(col);

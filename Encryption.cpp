@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <openssl/rand.h> // 引入用于随机数生成的头文件
 #include "GlobalSettings.h"
+#include <limits>
 
 class Encryption{
 public:
@@ -35,7 +36,7 @@ static bool aes_gcm_encrypt(const unsigned char *plaintext, int plaintext_len,
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) return false;
     int len;
-    int ciphertext_len;
+    //int ciphertext_len;
     if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
         return false;
     if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
@@ -44,10 +45,10 @@ static bool aes_gcm_encrypt(const unsigned char *plaintext, int plaintext_len,
         return false;
     if (!EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
         return false;
-    ciphertext_len = len;
+    //ciphertext_len = len;
     if (!EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
         return false;
-    ciphertext_len += len;
+    //ciphertext_len += len;
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag))
         return false;
     EVP_CIPHER_CTX_free(ctx);
@@ -62,7 +63,7 @@ static bool chacha20_poly1305_encrypt(const unsigned char *plaintext, int plaint
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) return false;
     int len;
-    int ciphertext_len;
+    //int ciphertext_len;
 
     // 初始化加密操作
     if (!EVP_EncryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL))
@@ -79,12 +80,12 @@ static bool chacha20_poly1305_encrypt(const unsigned char *plaintext, int plaint
     // 提供明文数据并加密
     if (!EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
         return false;
-    ciphertext_len = len;
+    //ciphertext_len = len;
 
     // 完成加密操作
     if (!EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
         return false;
-    ciphertext_len += len;
+    //ciphertext_len += len;
 
     // 获取TAG值
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag))
@@ -102,7 +103,7 @@ static bool chacha20_poly1305_decrypt(const unsigned char *ciphertext, int ciphe
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) return false;
     int len;
-    int plaintext_len;
+    //int plaintext_len;
 
     // 初始化解密操作
     if (!EVP_DecryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL))
@@ -119,7 +120,7 @@ static bool chacha20_poly1305_decrypt(const unsigned char *ciphertext, int ciphe
     // 提供密文数据并解密
     if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
         return false;
-    plaintext_len = len;
+    //plaintext_len = len;
 
     // 设置期望的TAG值
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, (void *)tag))
@@ -130,7 +131,7 @@ static bool chacha20_poly1305_decrypt(const unsigned char *ciphertext, int ciphe
         EVP_CIPHER_CTX_free(ctx);
         return false;
     }
-    plaintext_len += len;
+    //plaintext_len += len;
 
     EVP_CIPHER_CTX_free(ctx);
     return true;
@@ -144,7 +145,7 @@ static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) return false;
     int len;
-    int plaintext_len;
+    //int plaintext_len;
     // 初始化解密操作
     if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
         return false;
@@ -156,7 +157,7 @@ static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
     // 提供密文数据
     if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
         return false;
-    plaintext_len = len;
+    //plaintext_len = len;
     // 设置期望的 TAG 值
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, (void *)tag))
         return false;
@@ -166,7 +167,7 @@ static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
         return false;
     }
 
-    plaintext_len += len;
+    //plaintext_len += len;
     EVP_CIPHER_CTX_free(ctx);
     return true;
 }
@@ -200,7 +201,11 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
     else{
         iterc = GlobalSettings::instance().getDefIter();
     }
-    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), result.salt.size(), iterc, md, keyLength, key.data()) != 1) {
+    size_t saltSize = result.salt.size();
+    if (saltSize > static_cast<size_t>(std::numeric_limits<int>::max())) {
+        qDebug() << "Salt size is too large to fit into an int.";
+    }
+    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), static_cast<int>(saltSize), iterc, md, keyLength, key.data()) != 1) {
         qDebug() << "Failure in PBKDF2";
     }
     if (GlobalSettings::instance().getEncalg() == "AES256-GCM"){
@@ -229,9 +234,9 @@ static EncryptedData enc(const unsigned char *plaintext, const char *password, i
     result.tag.resize(16);
     result.ciphertext.resize(plaintextLength); // 加密后的数据大小等于明文长度加上16字节的标签
     // 生成salt和iv
-    if (!RAND_bytes(result.salt.data(), result.salt.size()) ||
-        !RAND_bytes(result.iv.data(), result.iv.size())) {
-        qDebug() << "Failure in PBKDF2";
+    if (!RAND_bytes(result.salt.data(), static_cast<int>(result.salt.size())) ||
+        !RAND_bytes(result.iv.data(), static_cast<int>(result.iv.size()))) {
+        qDebug() << "Failure in getting RAND_bytes";
     }
     // 密钥派生
     const int keyLength = 32;
@@ -250,9 +255,14 @@ static EncryptedData enc(const unsigned char *plaintext, const char *password, i
     else{
         iterc = GlobalSettings::instance().getDefIter();
         }
-    if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), result.salt.size(), iterc, md, keyLength, key.data()) != 1) {
-        qDebug() << "Failure in PBKDF2";
-    }
+        size_t saltSize = result.salt.size();
+        if (saltSize > static_cast<size_t>(std::numeric_limits<int>::max())) {
+            qDebug() << "Salt size is too large to fit into an int.";
+        }
+
+        if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), static_cast<int>(saltSize), iterc, md, keyLength, key.data()) != 1) {
+            qDebug() << "Failure in PBKDF2";
+        }
     // 加密操作
     if (GlobalSettings::instance().getEncalg() == "AES256-GCM"){
         if (aes_gcm_encrypt(plaintext, plaintextLength, nullptr, 0, key.data(), result.iv.data(), result.ciphertext.data(), result.tag.data())) {
