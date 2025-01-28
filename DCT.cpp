@@ -14,12 +14,26 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
+#include <fstream>
 //#include <bitset>
 #include <QDebug>
 class DCT{
 public:
     void forceLink() {
         jpeg_create_decompress(nullptr);  // 强制链接 jpeg_create_compress 函数
+    }
+
+    static bool isJPEG(const std::string& filePath) {
+        std::ifstream file(filePath, std::ios::binary);
+        if (!file) {
+            return false;
+        }
+
+        std::vector<unsigned char> buffer(2);
+        file.read(reinterpret_cast<char*>(buffer.data()), 2);
+        file.close();
+
+        return buffer.size() == 2 && buffer[0] == 0xFF && buffer[1] == 0xD8;
     }
 
     static struct jpeg_decompress_struct read_dct_coefficients(const char* filename,
@@ -158,6 +172,10 @@ public:
     }
 
     static void encode_image(const char* input_filename, const char* output_filename, const std::vector<uint8_t>& data) {
+        if (!isJPEG(input_filename)) {
+            return;
+        }
+
         std::vector<std::vector<std::vector<std::array<short, 64>>>> dct_coefficients;
         struct jpeg_decompress_struct srcinfo = read_dct_coefficients(input_filename, dct_coefficients);
 
@@ -171,6 +189,10 @@ public:
     }
 
     static void decode_image(const char* input_filename, std::vector<uint8_t>& data){
+        if (!isJPEG(input_filename)) {
+            return;
+        }
+
         std::vector<std::vector<std::vector<std::array<short, 64>>>> dct_coefficients;
         read_dct_coefficients(input_filename, dct_coefficients);
         uint16_t length = 0;

@@ -100,81 +100,117 @@ static bool chacha20_poly1305_decrypt(const unsigned char *ciphertext, int ciphe
                                       const unsigned char *tag, const unsigned char *key, const unsigned char *iv,
                                       unsigned char *plaintext) {
 
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    if (!ctx) return false;
-    int len;
-    //int plaintext_len;
-
-    // 初始化解密操作
-    if (!EVP_DecryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL))
-        return false;
-    if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
-        return false;
-
-    // 提供 AAD 数据
-    if (aad && aad_len > 0) {
-        if (!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len))
-            return false;
-    }
-
-    // 提供密文数据并解密
-    if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
-        return false;
-    //plaintext_len = len;
-
-    // 设置期望的TAG值
-    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, 16, (void *)tag))
-        return false;
-
-    // 完成解密操作
-    if (!EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
-        EVP_CIPHER_CTX_free(ctx);
+    if (!ciphertext || ciphertext_len <= 0 || !tag || !key || !iv || !plaintext) {
         return false;
     }
-    //plaintext_len += len;
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) {
+        return false;
+    }
+
+    int len = 0;
+    bool success = false;  // 标志解密成功与否
+
+    do {
+        // 初始化解密操作
+        if (!EVP_DecryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL)) {
+            break;
+        }
+        if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv)) {
+            break;
+        }
+
+        // 提供 AAD 数据
+        if (aad && aad_len > 0) {
+            if (!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len)) {
+                break;
+            }
+        }
+
+        // 提供密文数据
+        if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) {
+            break;
+        }
+
+        // 设置期望的 TAG 值
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, (void *)tag)) {
+            break;
+        }
+
+        // 完成解密
+        if (!EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
+            break;
+        }
+
+        success = true;  // 解密成功
+    } while (false);
 
     EVP_CIPHER_CTX_free(ctx);
-    return true;
+    return success;
 }
 
 static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
                             const unsigned char *aad, int aad_len,
                             const unsigned char *tag, const unsigned char *key, const unsigned char *iv,
                             unsigned char *plaintext) {
-
-    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    if (!ctx) return false;
-    int len;
-    //int plaintext_len;
-    // 初始化解密操作
-    if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
-        return false;
-    if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
-        return false;
-    // 提供 AAD 数据
-    if (!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len))
-        return false;
-    // 提供密文数据
-    if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
-        return false;
-    //plaintext_len = len;
-    // 设置期望的 TAG 值
-    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, (void *)tag))
-        return false;
-    // 完成解密
-    if (!EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
-        EVP_CIPHER_CTX_free(ctx);
+    if (!ciphertext || ciphertext_len <= 0 || !tag || !key || !iv || !plaintext) {
         return false;
     }
 
-    //plaintext_len += len;
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) {
+        return false;
+    }
+
+    int len = 0;
+    bool success = false;  // 标志解密成功与否
+
+    do {
+        // 初始化解密操作
+        if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL)) {
+            break;
+        }
+        if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv)) {
+            break;
+        }
+
+        // 提供 AAD 数据
+        if (aad && aad_len > 0) {
+            if (!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len)) {
+                break;
+            }
+        }
+
+        // 提供密文数据
+        if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) {
+            break;
+        }
+
+        // 设置期望的 TAG 值
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, (void *)tag)) {
+            break;
+        }
+
+        // 完成解密
+        if (!EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
+            break;
+        }
+
+        success = true;  // 解密成功
+    } while (false);
+
     EVP_CIPHER_CTX_free(ctx);
-    return true;
+    return success;
 }
 
+
+
 static std::vector<unsigned char> dec(const unsigned char *ciphertext, const char *password, int ciphertexyLength){
+    std::vector<uint8_t> nothing;
+
     if (ciphertexyLength < 44) {
-        // 处理错误情况
+        return nothing;
     }
 
     EncryptedData result;
@@ -204,15 +240,18 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
     size_t saltSize = result.salt.size();
     if (saltSize > static_cast<size_t>(std::numeric_limits<int>::max())) {
         qDebug() << "Salt size is too large to fit into an int.";
+        return nothing;
     }
     if (PKCS5_PBKDF2_HMAC(password, -1, result.salt.data(), static_cast<int>(saltSize), iterc, md, keyLength, key.data()) != 1) {
         qDebug() << "Failure in PBKDF2";
+        return nothing;
     }
     if (GlobalSettings::instance().getEncalg() == "AES256-GCM"){
         if (aes_gcm_decrypt(result.ciphertext.data(), ciphertexyLength-44, nullptr, 0,result.tag.data(), key.data(), result.iv.data(), result.ciphertext.data())) {
             std::cout << "Decryption succeeded." << std::endl;
         } else {
             std::cout << "Decryption failed." << std::endl;
+            return nothing;
         }
     }
     if (GlobalSettings::instance().getEncalg() == "ChaCha20-Poly1305"){
@@ -220,6 +259,7 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
             std::cout << "Decryption succeeded." << std::endl;
         } else {
             std::cout << "Decryption failed." << std::endl;
+            return nothing;
         }
     }
     std::vector<uint8_t> vectorData(result.ciphertext.data(), result.ciphertext.data() + result.ciphertext.size());

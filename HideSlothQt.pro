@@ -1,6 +1,6 @@
 QT       += core gui
 QT       += concurrent
-
+#QT -= networks qml quick
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 #QMAKE_LFLAGS += /NODEFAULTLIB:jpeg.lib /NODEFAULTLIB:libjpeg.lib /NODEFAULTLIB:jpeg62.lib
 QMAKE_PROJECT_DEPTH = 0

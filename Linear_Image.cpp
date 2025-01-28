@@ -5,6 +5,7 @@
 #include <QImage>
 #include <bitset>
 #include <cstring>
+#include <fstream>
 
 struct Color {
     uint8_t R;
@@ -19,6 +20,20 @@ struct Point {
 
 class Linear_Image {
 public:
+    static bool isPNG(const std::string& filePath) {
+        std::ifstream file(filePath, std::ios::binary);
+        if (!file) {
+            return false;
+        }
+
+        std::vector<unsigned char> buffer(8);
+        file.read(reinterpret_cast<char*>(buffer.data()), 8);
+        file.close();
+
+        const unsigned char pngHeader[8] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+        return buffer.size() == 8 && std::equal(std::begin(buffer), std::end(buffer), std::begin(pngHeader));
+    }
+
     static int DecodePixel(Color pixel) {
         int red = pixel.R & 3;
         int green = pixel.G & 7;

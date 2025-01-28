@@ -142,7 +142,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Capcatiy Info</string>
+     <string>Capacity Info</string>
     </property>
    </widget>
    <widget class="QPushButton" name="Check_Button">
