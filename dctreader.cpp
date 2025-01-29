@@ -10,6 +10,7 @@
 //#include <cstdint>
 #include <qtlibjpeg/jpeglib.h>
 #include <QDebug>
+#include "DCT.cpp"
 dctreader::dctreader(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::dctreader)
@@ -41,10 +42,13 @@ void dctreader::on_pushButton_3_clicked()
     QString jpegrr = ui->lineEdit->text();
     QString txtname = ui->lineEdit_2->text();
     QFile file(txtname);
-
+    if (!DCT::isJPEG(jpegrr.toStdString())){
+        QMessageBox::critical(this, "Error", "Not a valid JPEG file!");
+        return;
+    }
     // 以追加模式打开文件
     if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
-        //QMessageBox::critical(this, "Error", "Failed to open the output file!");
+        QMessageBox::critical(this, "Error", "Failed to open the output file!");
         return;
     }
 
