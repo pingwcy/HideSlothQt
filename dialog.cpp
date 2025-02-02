@@ -29,7 +29,8 @@ Dialog::Dialog(QWidget *parent)
     std::string stgal = GlobalSettings::instance().getStealg();
     int indexf = ui->comboBox_3->findText(QString::fromStdString(stgal));
     ui->comboBox_3->setCurrentIndex(indexf);
-
+    bool isjpglsb = GlobalSettings::instance().getJPGLSB();
+    ui->checkBox_3->setChecked(isjpglsb);
 }
 
 Dialog::~Dialog()
@@ -47,5 +48,6 @@ void Dialog::on_buttonBox_accepted()
     GlobalSettings::instance().setHash(ui->comboBox->currentText().toStdString());
     GlobalSettings::instance().setEncalg(ui->comboBox_2->currentText().toStdString());
     GlobalSettings::instance().setStealg(ui->comboBox_3->currentText().toStdString());
+    GlobalSettings::instance().setJPGLSB(ui->checkBox_3->isChecked());
     QMessageBox::information(this,QString::fromStdString("Saved"),QString::fromStdString("Settings Saved!"));
 }

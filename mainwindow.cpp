@@ -81,7 +81,7 @@ void MainWindow::on_pushButton_2_clicked()
         if (GlobalSettings::instance().getEnc()){
             Encryption::EncryptedData encryptedData = Encryption::enc(dataPtr,passwordPtr,dataLength);
             if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
-                if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString())){
+                if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString()) && !GlobalSettings::instance().getJPGLSB()){
                     QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
                     return;
                 }
@@ -100,7 +100,7 @@ void MainWindow::on_pushButton_2_clicked()
             }
         }
         else {
-            if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
+            if (GlobalSettings::instance().getStealg()=="PNG-LSB" && !GlobalSettings::instance().getJPGLSB()){
                 if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString())){
                     QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
                     return;
@@ -124,7 +124,7 @@ void MainWindow::on_pushButton_2_clicked()
     else if (Decode && GlobalSettings::instance().getMode()){
         std::vector<uint8_t> extractDataraw;
         if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
-            if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString())){
+            if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString()) && !GlobalSettings::instance().getJPGLSB()){
                 QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
                 return;
             }

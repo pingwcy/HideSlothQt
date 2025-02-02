@@ -35,6 +35,8 @@ public:
     std::string getStealg() const {return stealg;}
     void setStealg(std::string newStealg){stealg = newStealg;}
 
+    bool getJPGLSB() const {return LSBJPG;}
+    void setJPGLSB(bool newLSB) {LSBJPG = newLSB;}
 private:
     GlobalSettings() {} // Constructor? (the {} brackets) are needed here.
     // The default PBKDF2 parameters
@@ -50,6 +52,7 @@ private:
     std::string hash = "SHA256";
     std::string encalg = "AES256-GCM";
     std::string stealg = "JPG-DCT";
+    bool LSBJPG = true;
 };
 
 #endif // GLOBALSETTINGS_H
