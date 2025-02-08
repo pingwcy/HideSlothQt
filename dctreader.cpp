@@ -11,6 +11,10 @@
 #include <qtlibjpeg/jpeglib.h>
 #include <QDebug>
 #include "DCT.cpp"
+#include <QtConcurrent>
+#include <QFuture>
+#include <QFutureWatcher>
+
 dctreader::dctreader(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::dctreader)
@@ -36,24 +40,27 @@ void dctreader::on_pushButton_2_clicked()
     ui->lineEdit_2->setText(fileName);
 }
 
-void dctreader::on_pushButton_3_clicked() {
-    const QString jpegPath = ui->lineEdit->text();
-    const QString txtPath = ui->lineEdit_2->text();
-
+void dctreader::processDCT(const QString& jpegPath, const QString& txtPath) {
     QFile jpegFile(jpegPath);
     if (!jpegFile.open(QIODevice::ReadOnly)) {
-        QMessageBox::critical(this, "Error", "Failed to open JPEG file!");
+        QMetaObject::invokeMethod(this, [this]() {
+            QMessageBox::critical(this, "Error", "Failed to open JPEG file!");
+        }, Qt::QueuedConnection);
         return;
     }
 
     if (!DCT::isJPEG(jpegPath.toUtf8().constData())) {
-        QMessageBox::critical(this, "Error", "Not a valid JPEG file!");
+        QMetaObject::invokeMethod(this, [this]() {
+            QMessageBox::critical(this, "Error", "Not a valid JPEG file!");
+        }, Qt::QueuedConnection);
         return;
     }
 
     QFile outFile(txtPath);
     if (!outFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::critical(this, "Error", "Failed to open the output file!");
+        QMetaObject::invokeMethod(this, [this]() {
+            QMessageBox::critical(this, "Error", "Failed to open the output file!");
+        }, Qt::QueuedConnection);
         return;
     }
     QTextStream out(&outFile);
@@ -63,33 +70,37 @@ void dctreader::on_pushButton_3_clicked() {
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&cinfo);
 
-    // 直接使用 QFile 读取数据
     QByteArray jpegData = jpegFile.readAll();
     jpeg_mem_src(&cinfo, (const unsigned char*)jpegData.constData(), jpegData.size());
 
     if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK) {
-        QMessageBox::critical(this, "Error", "Invalid JPEG header!");
+        QMetaObject::invokeMethod(this, [this]() {
+            QMessageBox::critical(this, "Error", "Invalid JPEG header!");
+        }, Qt::QueuedConnection);
         jpeg_destroy_decompress(&cinfo);
         return;
     }
 
     jvirt_barray_ptr* coef_arrays = jpeg_read_coefficients(&cinfo);
     if (!coef_arrays) {
-        QMessageBox::critical(this, "Error", "Failed to read DCT coefficients!");
+        QMetaObject::invokeMethod(this, [this]() {
+            QMessageBox::critical(this, "Error", "Failed to read DCT coefficients!");
+        }, Qt::QueuedConnection);
         jpeg_destroy_decompress(&cinfo);
         return;
     }
 
-    // 遍历 DCT 系数
     if (!cinfo.comp_info) {
-        QMessageBox::critical(this, "Error", "JPEG Component Info is null!");
+        QMetaObject::invokeMethod(this, [this]() {
+            QMessageBox::critical(this, "Error", "JPEG Component Info is null!");
+        }, Qt::QueuedConnection);
         jpeg_destroy_decompress(&cinfo);
         return;
     }
 
     for (int comp = 0; comp < cinfo.num_components; comp++) {
         jpeg_component_info* comp_info = &cinfo.comp_info[comp];
-        if (!comp_info) continue; // 额外的安全检查
+        if (!comp_info) continue;
 
         for (unsigned int row = 0; row < comp_info->height_in_blocks; row++) {
             JBLOCKARRAY coef_blocks = (cinfo.mem->access_virt_barray)
@@ -109,13 +120,44 @@ void dctreader::on_pushButton_3_clicked() {
         }
     }
 
-    out.flush();  // 确保数据写入
+    out.flush();
     outFile.close();
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
-    QMessageBox::information(this, "Success", "DCT coefficients successfully saved!");
+
+    // 任务成功完成后通知主线程
+    QMetaObject::invokeMethod(this, [this]() {
+        QMessageBox::information(this, "Success", "DCT coefficients successfully saved!");
+    }, Qt::QueuedConnection);
 }
 
+void dctreader::on_pushButton_3_clicked() {
+    const QString jpegPath = ui->lineEdit->text();
+    const QString txtPath = ui->lineEdit_2->text();
 
+    if (jpegPath.isEmpty() || txtPath.isEmpty()) {
+        QMessageBox::warning(this, "Warning", "Please provide valid file paths.");
+        return;
+    }
+
+    // 禁用按钮，防止重复点击
+    ui->pushButton_3->setEnabled(false);
+    ui->progressBar->setMaximum(0);
+    // 使用 QtConcurrent 启动后台任务
+    QFuture<void> future = QtConcurrent::run([this, jpegPath, txtPath]() {
+        processDCT(jpegPath, txtPath);
+    });
+
+    // 使用 QFutureWatcher 监听任务完成
+    auto* watcher = new QFutureWatcher<void>(this);
+    connect(watcher, &QFutureWatcher<void>::finished, this, [this, watcher]() {
+        watcher->deleteLater();
+        ui->pushButton_3->setEnabled(true);
+        ui->progressBar->setMaximum(1);
+        //QMessageBox::information(this, "Success", "DCT coefficients successfully saved!");
+    });
+
+    watcher->setFuture(future);
+}
 
 

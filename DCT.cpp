@@ -45,7 +45,8 @@ public:
         errno_t err = fopen_s(&infile, filename, "rb");
         if (err != 0) {
             // 打开文件失败，处理错误
-            qDebug() << "Failed to open file";
+            qDebug() << "Failed to open input file";
+            return {};
         } else {
             // 文件打开成功，可以继续操作
         }
@@ -138,9 +139,12 @@ public:
 
         FILE* outfile = nullptr; // 必须先初始化为 nullptr
         errno_t err = fopen_s(&outfile, output_filename, "wb");
+        qDebug() << output_filename;
         if (err != 0) {
             // 打开文件失败，处理错误
-            qDebug() << "Failed to open file";
+            qDebug() << "Failed to open output file";
+            qDebug() << err;
+            return;
         } else {
             // 文件打开成功，可以继续操作
         }

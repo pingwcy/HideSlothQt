@@ -21,7 +21,7 @@ private slots:
     void on_pushButton_2_clicked();
 
     void on_pushButton_3_clicked();
-
+    void dctreader::processDCT(const QString& , const QString& );
 private:
     Ui::dctreader *ui;
 };

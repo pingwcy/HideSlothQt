@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Steganograaphy and Encryption System</string>
+   <string>Steganography and Encryption System</string>
   </property>
   <property name="windowIcon">
    <iconset resource="Resources/about.qrc">
@@ -142,7 +142,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Capacity Info</string>
+     <string>Capacity Infomation</string>
     </property>
    </widget>
    <widget class="QPushButton" name="Check_Button">
@@ -299,6 +299,19 @@
     </property>
     <property name="text">
      <string>Advanced Settings</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>800</x>
+      <y>0</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>DevTest</string>
     </property>
    </widget>
   </widget>

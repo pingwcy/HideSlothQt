@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 #include <QMainWindow>
 QT_BEGIN_NAMESPACE
+#include <QMessageBox>
 
 namespace Ui { class MainWindow; }
 
@@ -13,6 +14,16 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    std::vector<uint8_t> extractDataraw;
+
+
+public slots:
+    void showSuccessMessage() {
+        QMessageBox::information(this, QString::fromStdString("Success"), QString::fromStdString("Succes Encode and save!"));
+    }
+    void showSuccessMessage2() {
+        QMessageBox::information(this, QString::fromStdString("Success"), QString::fromStdString("Succes Decode!"));
+    }
 
 private slots:
     void on_pushButton_2_clicked();
@@ -29,6 +40,8 @@ private slots:
     void on_actionAbout_triggered();
 
     void on_actionDCT_Cof_Reader_triggered();
+
+    void on_pushButton_clicked();
 
 private:
     Ui::MainWindow *ui;

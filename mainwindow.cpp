@@ -21,12 +21,16 @@
 #include "GlobalSettings.h"
 #include <DCT.cpp>
 #include <dctreader.h>
+#include <QFuture>
+#include <QFutureWatcher>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     statusBar()->setStyleSheet("QStatusBar{background-color: #e8ebe9; border: 1px  #e3e6e4;}");
+
 }
 
 MainWindow::~MainWindow()
@@ -61,113 +65,136 @@ void MainWindow::on_pushButton_2_clicked()
     bool Decode = ui->radioButton_2->isChecked();
     bool File = ui->radioButton_3->isChecked();
     bool Isstring = ui->radioButton_4->isChecked();
-    // 根据需要处理这些值
+    // 下面开始逻辑
     if (Encode && GlobalSettings::instance().getMode()){
+        //先获取文本框内容
         QByteArray utf8Text = PlainText.toUtf8(); // 将QString转换为QByteArray
+        //如果选择的是文件则用下方方式覆盖utf8Text
         if (File && !Isstring){
-            QFile file(SecretRoute); // 替换为你的文件路径
+            QFile file(SecretRoute);
             if (file.open(QIODevice::ReadOnly)) {
                 utf8Text = file.readAll();
             }
             file.close();
+            //读取明文结束，下面嵌入文件名到头部用竖线分割
             QFileInfo fileInfo(SecretRoute);
             QString fileName = fileInfo.fileName()+ "|";
             QByteArray byteArray = fileName.toUtf8();
             utf8Text = byteArray + utf8Text;
         }
+        //将读取内容转换为向量
         const std::vector<uint8_t> data(utf8Text.begin(), utf8Text.end()); // 使用QByteArray初始化std::vector
+        //获取指针，为了加密需要
         const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
+        //获取长度，为了加密需要
         int dataLength = static_cast<int>(data.size());
+        //初始化加密后的结构体
+        Encryption::EncryptedData encryptedData;
+        //如果需要加密则执行
         if (GlobalSettings::instance().getEnc()){
-            Encryption::EncryptedData encryptedData = Encryption::enc(dataPtr,passwordPtr,dataLength);
-            if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
-                if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString()) && !GlobalSettings::instance().getJPGLSB()){
-                    QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
-                    return;
-                }
-                QImage image(ContainerRoute);
-                QtConcurrent::run(&Linear_Image::Encode, &image, encryptedDataToVector(encryptedData));
-                QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
-                image.save(fileName,"PNG");
-            }
-            if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
-                if (!DCT::isJPEG((ContainerRoute.toLocal8Bit().toStdString()))){
-                    QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
-                    return;
-                }
-                QString fileName2 = QFileDialog::getSaveFileName(this,tr("Save File"));
-                DCT::encode_image(ContainerRoute.toLocal8Bit().constData(), fileName2.toLocal8Bit().constData(),encryptedDataToVector(encryptedData));
-            }
+            encryptedData = Encryption::enc(dataPtr,passwordPtr,dataLength);
         }
-        else {
-            if (GlobalSettings::instance().getStealg()=="PNG-LSB" && !GlobalSettings::instance().getJPGLSB()){
-                if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString())){
-                    QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
-                    return;
-                }
-                QImage image(ContainerRoute);
-                QtConcurrent::run(&Linear_Image::Encode, &image, data);
-                QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
-                image.save(fileName,"PNG");
-            }
-            if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
-                if (!DCT::isJPEG((ContainerRoute.toLocal8Bit().toStdString()))){
-                    QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
-                    return;
-                }
-                QString fileName2 = QFileDialog::getSaveFileName(this,tr("Save File"));
-                DCT::encode_image(ContainerRoute.toLocal8Bit().constData(), fileName2.toLocal8Bit().constData(),data);
-            }
-        }
-        QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("Succes Encode and save!"));
-    }
-    else if (Decode && GlobalSettings::instance().getMode()){
-        std::vector<uint8_t> extractDataraw;
+        //判断使用什么算法并且核实文件格式，首先是PNG-LSB
         if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
             if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString()) && !GlobalSettings::instance().getJPGLSB()){
                 QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
                 return;
             }
-            QImage image(ContainerRoute);
-            extractDataraw = Linear_Image::Decode(image);
         }
+        //然后是JPG-DCT
         if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
             if (!DCT::isJPEG((ContainerRoute.toLocal8Bit().toStdString()))){
                 QMessageBox::information(this,QString::fromStdString("Wrong"),QString::fromStdString("Wrong image format!"));
                 return;
             }
-            DCT::decode_image(ContainerRoute.toLocal8Bit().constData(), extractDataraw);
         }
-        if (GlobalSettings::instance().getEnc()){
-            const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(extractDataraw.data());
-            extractDataraw = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(extractDataraw.size()));
-            if (extractDataraw.size()<1){
-                QMessageBox::information(this,QString::fromStdString("Fail"),QString::fromStdString("Fail to decrypt!"));
-                //extractDataraw.clear();
+        //获取指定输出文件名
+        QString fileName2 = QFileDialog::getSaveFileName(this,tr("Save File"));
+        //随后开启Concurrent避免阻塞GUI
+        QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
+        // 连接信号和槽
+        QObject::connect(watcher, &QFutureWatcher<void>::finished, this, &MainWindow::showSuccessMessage);
+        //不同算法 是否加密
+        QFuture<void> future = QtConcurrent::run([=]() {
+            if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
+                DCT::encode_image(ContainerRoute.toUtf8().constData(), fileName2.toUtf8().constData(), GlobalSettings::instance().getEnc()? encryptedDataToVector(encryptedData): data);}
+            if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
+                QImage image(ContainerRoute);
+                Linear_Image::Encode(&image, GlobalSettings::instance().getEnc()? encryptedDataToVector(encryptedData): data);
+                image.save(fileName2);
+            }
+        });
+        watcher->setFuture(future);
+    }
+    else if (Decode && GlobalSettings::instance().getMode()){
+        QFutureWatcher<std::vector<uint8_t>> *watcher = new QFutureWatcher<std::vector<uint8_t>>();
+        auto &settings = GlobalSettings::instance();
+        std::string stealg = settings.getStealg();
+        if (stealg == "PNG-LSB") {
+            if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString()) && !settings.getJPGLSB()) {
+                QMessageBox::information(nullptr, "Wrong", "Wrong image format!");
                 return;
             }
+            //QImage image(ContainerRoute);
+            // 异步执行 Linear_Image::Decode
+            ui->pushButton_2->setEnabled(false);
+            QFuture<std::vector<uint8_t>> future = QtConcurrent::run([ContainerRoute]() {
+                QImage image(ContainerRoute);
+                return Linear_Image::Decode(image);
+            });
+
+            // 监视任务完成
+            watcher->setFuture(future);
         }
-        if (File && !Isstring){
-            QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size()));
-            QString Filename = "";
-            int splitIndex = byteData.indexOf('|'); // 查找 '|' 的位置
-            if (splitIndex != -1) { // 如果找到 '|'
-                Filename = QString::fromUtf8(byteData.left(splitIndex));
-                byteData = byteData.mid(splitIndex + 1);
+        if (stealg == "JPG-DCT") {
+            if (!DCT::isJPEG(ContainerRoute.toLocal8Bit().toStdString())) {
+                QMessageBox::information(nullptr, "Wrong", "Wrong image format!");
+                return;
             }
-            QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),Filename);
-            QFile file(fileName);
-            if (file.open(QIODevice::WriteOnly)) {
-                file.write(byteData);
+            // 异步执行 DCT::decode_image
+            ui->pushButton_2->setEnabled(false);
+            QFuture<std::vector<uint8_t>> future = QtConcurrent::run([ContainerRoute]() {
+                std::vector<uint8_t> extractDataraw;
+                DCT::decode_image(ContainerRoute.toLocal8Bit().constData(), extractDataraw);
+                return extractDataraw;
+            });
+
+            // 监视任务完成
+            watcher->setFuture(future);
+        }
+        connect(watcher, &QFutureWatcher<std::vector<uint8_t>>::finished, this, [=]() {
+            //extractDataraw.clear();
+            ui->pushButton_2->setEnabled(true);
+            extractDataraw = watcher->result();  // 访问局部变量 watcher
+            if (GlobalSettings::instance().getEnc()){
+                const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(extractDataraw.data());
+                //qDebug() << "Decoding finished. Data size:" << extractDataraw;
+                extractDataraw = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(extractDataraw.size()));
+                if (extractDataraw.size()<1){
+                    QMessageBox::information(this,QString::fromStdString("Fail"),QString::fromStdString("Fail to decrypt!"));
+                    return;
+                }
             }
-            file.close();
-            //extractDataraw.clear();
-        }
-        else{
-            ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size())));
-            //extractDataraw.clear();
-        }
-        QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("Success Decode!"));
+            if (File && !Isstring){
+                QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size()));
+                QString Filename = "";
+                int splitIndex = byteData.indexOf('|'); // 查找 '|' 的位置
+                if (splitIndex != -1) { // 如果找到 '|'
+                    Filename = QString::fromUtf8(byteData.left(splitIndex));
+                    byteData = byteData.mid(splitIndex + 1);
+                }
+                QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),Filename);
+                QFile file(fileName);
+                if (file.open(QIODevice::WriteOnly)) {
+                    file.write(byteData);
+                }
+                file.close();
+            }
+            else{
+                ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size())));
+            }
+            //&MainWindow::showSuccessMessage2;
+        });
     }
     else if (Encode && !GlobalSettings::instance().getMode()){
         QByteArray utf8Text = PlainText.toUtf8(); // 将QString转换为QByteArray
@@ -261,8 +288,8 @@ void MainWindow::on_Check_Button_clicked()
     QFile file(SecretRoute);
     double ImageCapa;
     if (Linear_Image::isPNG(ContainerRoute.toStdString())){
-    ImageCapa = Linear_Image::CheckSize(image);
-    Capainfo += "This container's capacity is "+QString::number(ImageCapa)+" KB. ";
+        ImageCapa = Linear_Image::CheckSize(image);
+        Capainfo += "This container's capacity is "+QString::number(ImageCapa)+" KB. ";
     }
     else if (DCT::isJPEG(ContainerRoute.toStdString())){
         ImageCapa = (image.height()*image.width()/64)*1.5/8/1024;
@@ -358,4 +385,55 @@ void MainWindow::on_actionDCT_Cof_Reader_triggered()
     dctreader1->setAttribute(Qt::WA_DeleteOnClose);
     dctreader1->show();
 }
+
+
+void MainWindow::on_pushButton_clicked()
+{
+    int i = 0;
+    do{
+        i++;
+    QFutureWatcher<std::vector<uint8_t>> *watcher = new QFutureWatcher<std::vector<uint8_t>>();
+    auto &settings = GlobalSettings::instance();
+    std::string stealg = settings.getStealg();
+    if (stealg == "PNG-LSB") {
+        //QImage image("D:/Share_TMP/12/22.jpg");
+        // 异步执行 Linear_Image::Decode
+        ui->pushButton_2->setEnabled(false);
+        QFuture<std::vector<uint8_t>> future = QtConcurrent::run([]() {
+            QImage image("D:/Share_TMP/12/2.png");
+            return Linear_Image::Decode(image);
+        });
+
+        // 监视任务完成
+        watcher->setFuture(future);
+    }
+    if (stealg == "JPG-DCT") {
+        // 异步执行 DCT::decode_image
+        ui->pushButton_2->setEnabled(false);
+        QFuture<std::vector<uint8_t>> future = QtConcurrent::run([]() {
+            std::vector<uint8_t> extractDataraw;
+            DCT::decode_image("D:/Share_TMP/12/2.jpg", extractDataraw);
+            return extractDataraw;
+        });
+
+        // 监视任务完成
+        watcher->setFuture(future);
+    }
+    connect(watcher, &QFutureWatcher<std::vector<uint8_t>>::finished, this, [=]() {
+        //extractDataraw.clear();
+        ui->pushButton_2->setEnabled(true);
+        extractDataraw = watcher->result();  // 访问局部变量 watcher
+        if (GlobalSettings::instance().getEnc()){
+            const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(extractDataraw.data());
+            //qDebug() << "Decoding finished. Data size:" << extractDataraw;
+            extractDataraw = Encryption::dec(dataPtr,"",static_cast<int>(extractDataraw.size()));
+            if (extractDataraw.size()<1){
+                QMessageBox::information(this,QString::fromStdString("Fail"),QString::fromStdString("Fail to decrypt!"));
+                return;
+            }
+        }
+            ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size())));
+    });} while (i<1000);
+}
+
 

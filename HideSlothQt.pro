@@ -7,6 +7,8 @@ QMAKE_PROJECT_DEPTH = 0
 QMAKE_CXXFLAGS += /utf-8
 
 CONFIG += c++17
+CONFIG += clean
+
 #The next two lines are for MSVC static link
 QMAKE_CXXFLAGS_RELEASE += -MT
 QMAKE_CFLAGS_RELEASE += -MT

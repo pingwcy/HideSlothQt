@@ -6,7 +6,7 @@
 #include <openssl/rand.h> // 引入用于随机数生成的头文件
 #include "GlobalSettings.h"
 #include <limits>
-
+#include <openssl/err.h>
 class Encryption{
 public:
 struct EncryptedData {
@@ -155,11 +155,13 @@ static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
                             const unsigned char *tag, const unsigned char *key, const unsigned char *iv,
                             unsigned char *plaintext) {
     if (!ciphertext || ciphertext_len <= 0 || !tag || !key || !iv || !plaintext) {
+        printf("Error: Invalid input parameters.\n");
         return false;
     }
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
+        printf("Error: Failed to create EVP_CIPHER_CTX.\n");
         return false;
     }
 
@@ -169,31 +171,43 @@ static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
     do {
         // 初始化解密操作
         if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL)) {
+            unsigned long err_code = ERR_get_error();
+            printf("Error: EVP_DecryptInit_ex failed: %s\n", ERR_error_string(err_code, NULL));
             break;
         }
         if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv)) {
+            unsigned long err_code = ERR_get_error();
+            printf("Error: EVP_DecryptInit_ex with key and iv failed: %s\n", ERR_error_string(err_code, NULL));
             break;
         }
 
         // 提供 AAD 数据
         if (aad && aad_len > 0) {
             if (!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len)) {
+                unsigned long err_code = ERR_get_error();
+                printf("Error: EVP_DecryptUpdate failed while processing AAD: %s\n", ERR_error_string(err_code, NULL));
                 break;
             }
         }
 
         // 提供密文数据
         if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) {
+            unsigned long err_code = ERR_get_error();
+            printf("Error: EVP_DecryptUpdate failed while processing ciphertext: %s\n", ERR_error_string(err_code, NULL));
             break;
         }
 
         // 设置期望的 TAG 值
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, (void *)tag)) {
+            unsigned long err_code = ERR_get_error();
+            printf("Error: EVP_CIPHER_CTX_ctrl failed while setting TAG: %s\n", ERR_error_string(err_code, NULL));
             break;
         }
 
         // 完成解密
         if (!EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
+            unsigned long err_code = ERR_get_error();
+            printf("Error: EVP_DecryptFinal_ex failed: %s\n", ERR_error_string(err_code, NULL));
             break;
         }
 
@@ -203,6 +217,7 @@ static bool aes_gcm_decrypt(const unsigned char *ciphertext, int ciphertext_len,
     EVP_CIPHER_CTX_free(ctx);
     return success;
 }
+
 
 
 
@@ -251,6 +266,7 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
             std::cout << "Decryption succeeded." << std::endl;
         } else {
             std::cout << "Decryption failed." << std::endl;
+            //qDebug() << ciphertext;
             return nothing;
         }
     }
