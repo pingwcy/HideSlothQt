@@ -127,73 +127,78 @@ void MainWindow::on_pushButton_2_clicked()
         watcher->setFuture(future);
     }
     else if (Decode && GlobalSettings::instance().getMode()){
-        QFutureWatcher<std::vector<uint8_t>> *watcher = new QFutureWatcher<std::vector<uint8_t>>();
+        auto watcher = new QFutureWatcher<std::vector<uint8_t>>(this);
         auto &settings = GlobalSettings::instance();
         std::string stealg = settings.getStealg();
-        if (stealg == "PNG-LSB") {
-            if (!Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString()) && !settings.getJPGLSB()) {
-                QMessageBox::information(nullptr, "Wrong", "Wrong image format!");
-                return;
-            }
-            //QImage image(ContainerRoute);
-            // 异步执行 Linear_Image::Decode
-            ui->pushButton_2->setEnabled(false);
-            QFuture<std::vector<uint8_t>> future = QtConcurrent::run([ContainerRoute]() {
+
+        if ((stealg == "PNG-LSB" && !Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString()) && !settings.getJPGLSB()) ||
+            (stealg == "JPG-DCT" && !DCT::isJPEG(ContainerRoute.toLocal8Bit().toStdString()))) {
+            QMessageBox::information(this, "Wrong", "Wrong image format!");
+            return;
+        }
+
+        ui->pushButton_2->setEnabled(false);
+
+        QFuture<std::vector<uint8_t>> future = QtConcurrent::run([=]() -> std::vector<uint8_t> {
+            if (stealg == "PNG-LSB") {
                 QImage image(ContainerRoute);
                 return Linear_Image::Decode(image);
-            });
-
-            // 监视任务完成
-            watcher->setFuture(future);
-        }
-        if (stealg == "JPG-DCT") {
-            if (!DCT::isJPEG(ContainerRoute.toLocal8Bit().toStdString())) {
-                QMessageBox::information(nullptr, "Wrong", "Wrong image format!");
-                return;
-            }
-            // 异步执行 DCT::decode_image
-            ui->pushButton_2->setEnabled(false);
-            QFuture<std::vector<uint8_t>> future = QtConcurrent::run([ContainerRoute]() {
+            } else if (stealg == "JPG-DCT") {
                 std::vector<uint8_t> extractDataraw;
                 DCT::decode_image(ContainerRoute.toLocal8Bit().constData(), extractDataraw);
                 return extractDataraw;
-            });
+            }
+            return {};
+        });
 
-            // 监视任务完成
-            watcher->setFuture(future);
-        }
-        connect(watcher, &QFutureWatcher<std::vector<uint8_t>>::finished, this, [=]() {
-            //extractDataraw.clear();
-            ui->pushButton_2->setEnabled(true);
-            extractDataraw = watcher->result();  // 访问局部变量 watcher
-            if (GlobalSettings::instance().getEnc()){
+        watcher->setFuture(future);
+
+        connect(watcher, &QFutureWatcher<std::vector<uint8_t>>::finished, this, [this, watcher, passwordPtr, File, Isstring]() {
+            auto &settings = GlobalSettings::instance();
+            std::vector<uint8_t> extractDataraw = watcher->result();
+
+            if (settings.getEnc()) {
                 const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(extractDataraw.data());
-                //qDebug() << "Decoding finished. Data size:" << extractDataraw;
-                extractDataraw = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(extractDataraw.size()));
-                if (extractDataraw.size()<1){
-                    QMessageBox::information(this,QString::fromStdString("Fail"),QString::fromStdString("Fail to decrypt!"));
+                extractDataraw = Encryption::dec(dataPtr, passwordPtr, static_cast<int>(extractDataraw.size()));
+                if (extractDataraw.empty()) {
+                    QMetaObject::invokeMethod(this, [this]() {
+                        QMessageBox::information(this, "Fail", "Fail to decrypt!");
+                    }, Qt::QueuedConnection);
+                    QMetaObject::invokeMethod(this, [this]() {
+                        ui->pushButton_2->setEnabled(true);
+                    });
+                    watcher->deleteLater();  // 释放watcher
                     return;
                 }
             }
-            if (File && !Isstring){
-                QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size()));
-                QString Filename = "";
-                int splitIndex = byteData.indexOf('|'); // 查找 '|' 的位置
-                if (splitIndex != -1) { // 如果找到 '|'
-                    Filename = QString::fromUtf8(byteData.left(splitIndex));
-                    byteData = byteData.mid(splitIndex + 1);
+
+            QMetaObject::invokeMethod(this, [this, extractDataraw, File, Isstring]() {
+                ui->pushButton_2->setEnabled(true);
+
+                if (File && !Isstring) {
+                    QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size()));
+                    QString Filename;
+                    int splitIndex = byteData.indexOf('|');
+                    if (splitIndex != -1) {
+                        Filename = QString::fromUtf8(byteData.left(splitIndex));
+                        byteData = byteData.mid(splitIndex + 1);
+                    }
+                    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), Filename);
+                    if (fileName.isEmpty()) {
+                        return;  // 避免创建空文件
+                    }
+
+                    QFile file(fileName);
+                    if (file.open(QIODevice::WriteOnly)) {
+                        file.write(byteData);
+                    }
+                    file.close();
+                } else {
+                    ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size())));
                 }
-                QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),Filename);
-                QFile file(fileName);
-                if (file.open(QIODevice::WriteOnly)) {
-                    file.write(byteData);
-                }
-                file.close();
-            }
-            else{
-                ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size())));
-            }
-            //&MainWindow::showSuccessMessage2;
+            }, Qt::QueuedConnection);
+
+            watcher->deleteLater();  // 释放watcher
         });
     }
     else if (Encode && !GlobalSettings::instance().getMode()){
@@ -412,7 +417,7 @@ void MainWindow::on_pushButton_clicked()
         ui->pushButton_2->setEnabled(false);
         QFuture<std::vector<uint8_t>> future = QtConcurrent::run([]() {
             std::vector<uint8_t> extractDataraw;
-            DCT::decode_image("D:/Share_TMP/12/2.jpg", extractDataraw);
+            DCT::decode_image("D:/Share_TMP/12/22.jpg", extractDataraw);
             return extractDataraw;
         });
 
