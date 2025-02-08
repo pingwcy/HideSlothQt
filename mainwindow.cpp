@@ -127,6 +127,8 @@ void MainWindow::on_pushButton_2_clicked()
         watcher->setFuture(future);
     }
     else if (Decode && GlobalSettings::instance().getMode()){
+        std::string passwordCopy = passwordBytes.toStdString(); // 拷贝到 std::string
+
         auto watcher = new QFutureWatcher<std::vector<uint8_t>>(this);
         auto &settings = GlobalSettings::instance();
         std::string stealg = settings.getStealg();
@@ -153,13 +155,13 @@ void MainWindow::on_pushButton_2_clicked()
 
         watcher->setFuture(future);
 
-        connect(watcher, &QFutureWatcher<std::vector<uint8_t>>::finished, this, [this, watcher, passwordPtr, File, Isstring]() {
+        connect(watcher, &QFutureWatcher<std::vector<uint8_t>>::finished, this, [this, watcher, passwordCopy, File, Isstring]() {
             auto &settings = GlobalSettings::instance();
             std::vector<uint8_t> extractDataraw = watcher->result();
 
             if (settings.getEnc()) {
                 const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(extractDataraw.data());
-                extractDataraw = Encryption::dec(dataPtr, passwordPtr, static_cast<int>(extractDataraw.size()));
+                extractDataraw = Encryption::dec(dataPtr, reinterpret_cast<const char*>(passwordCopy.data()), static_cast<int>(extractDataraw.size()));
                 if (extractDataraw.empty()) {
                     QMetaObject::invokeMethod(this, [this]() {
                         QMessageBox::information(this, "Fail", "Fail to decrypt!");
