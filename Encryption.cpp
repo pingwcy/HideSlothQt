@@ -262,8 +262,8 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
             return nothing;
         }
     }
-    std::vector<uint8_t> vectorData(result.ciphertext.data(), result.ciphertext.data() + result.ciphertext.size());
-    return vectorData;
+    //std::vector<uint8_t> vectorData(result.ciphertext.data(), result.ciphertext.data() + result.ciphertext.size());
+    return std::move(result.ciphertext);
 }
 
 static EncryptedData enc(const unsigned char *plaintext, const char *password, int plaintextLength) {
@@ -277,6 +277,7 @@ static EncryptedData enc(const unsigned char *plaintext, const char *password, i
     if (!RAND_bytes(result.salt.data(), static_cast<int>(result.salt.size())) ||
         !RAND_bytes(result.iv.data(), static_cast<int>(result.iv.size()))) {
         qDebug() << "Failure in getting RAND_bytes";
+        return {};
     }
     // 密钥派生
     const int keyLength = 32;

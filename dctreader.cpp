@@ -36,75 +36,86 @@ void dctreader::on_pushButton_2_clicked()
     ui->lineEdit_2->setText(fileName);
 }
 
+void dctreader::on_pushButton_3_clicked() {
+    const QString jpegPath = ui->lineEdit->text();
+    const QString txtPath = ui->lineEdit_2->text();
 
-void dctreader::on_pushButton_3_clicked()
-{
-    QString jpegrr = ui->lineEdit->text();
-    QString txtname = ui->lineEdit_2->text();
-    QFile file(txtname);
-    if (!DCT::isJPEG(jpegrr.toStdString())){
+    QFile jpegFile(jpegPath);
+    if (!jpegFile.open(QIODevice::ReadOnly)) {
+        QMessageBox::critical(this, "Error", "Failed to open JPEG file!");
+        return;
+    }
+
+    if (!DCT::isJPEG(jpegPath.toUtf8().constData())) {
         QMessageBox::critical(this, "Error", "Not a valid JPEG file!");
         return;
     }
-    // 以追加模式打开文件
-    if (!file.open(QIODevice::ReadWrite | QIODevice::Text)) {
+
+    QFile outFile(txtPath);
+    if (!outFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QMessageBox::critical(this, "Error", "Failed to open the output file!");
         return;
     }
+    QTextStream out(&outFile);
 
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
-
-    // 打开 JPEG 文件
-    FILE* infile = nullptr; // 必须先初始化为 nullptr
-    errno_t err = fopen_s(&infile, jpegrr.toLocal8Bit().constData(), "rb");
-    if (err != 0) {
-        // 打开文件失败，处理错误
-        qDebug() << "Failed to open file";
-    } else {
-        // 文件打开成功，可以继续操作
-    }
-
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&cinfo);
-    jpeg_stdio_src(&cinfo, infile);
 
-    // 读取 JPEG header
-    jpeg_read_header(&cinfo, TRUE);
+    // 直接使用 QFile 读取数据
+    QByteArray jpegData = jpegFile.readAll();
+    jpeg_mem_src(&cinfo, (const unsigned char*)jpegData.constData(), jpegData.size());
 
-    // 获取压缩系数
+    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK) {
+        QMessageBox::critical(this, "Error", "Invalid JPEG header!");
+        jpeg_destroy_decompress(&cinfo);
+        return;
+    }
+
     jvirt_barray_ptr* coef_arrays = jpeg_read_coefficients(&cinfo);
-    JBLOCKARRAY coef_blocks;
-    JBLOCK* block;
+    if (!coef_arrays) {
+        QMessageBox::critical(this, "Error", "Failed to read DCT coefficients!");
+        jpeg_destroy_decompress(&cinfo);
+        return;
+    }
 
-    // 用于存储要写入文件的内容
-    QString outputText;
+    // 遍历 DCT 系数
+    if (!cinfo.comp_info) {
+        QMessageBox::critical(this, "Error", "JPEG Component Info is null!");
+        jpeg_destroy_decompress(&cinfo);
+        return;
+    }
 
     for (int comp = 0; comp < cinfo.num_components; comp++) {
         jpeg_component_info* comp_info = &cinfo.comp_info[comp];
+        if (!comp_info) continue; // 额外的安全检查
+
         for (unsigned int row = 0; row < comp_info->height_in_blocks; row++) {
-            coef_blocks = (cinfo.mem->access_virt_barray)(
-                (j_common_ptr)&cinfo, coef_arrays[comp], row, 1, FALSE);
+            JBLOCKARRAY coef_blocks = (cinfo.mem->access_virt_barray)
+            ((j_common_ptr)&cinfo, coef_arrays[comp], row, 1, FALSE);
+
+            if (!coef_blocks) continue;
+
             for (unsigned int col = 0; col < comp_info->width_in_blocks; col++) {
-                block = coef_blocks[0] + col;
-                // 使用 QStringBuilder 进行字符串拼接
-                outputText += QStringLiteral("Component %1 Block(%2,%3): ").arg(comp).arg(row).arg(col);
+                JBLOCK* block = coef_blocks[0] + col;
+                QString outputStr = QString("Component %1 Block(%2,%3): ").arg(comp).arg(row).arg(col);
+
                 for (int k = 0; k < DCTSIZE2; k++) {
-                    outputText += QString::number(block[0][k]) % ' ';
+                    outputStr.append(QString::number(block[0][k]) + " ");
                 }
-                outputText += '\n';
+                out << outputStr << '\n';
             }
         }
     }
 
-    // 一次性将内容写入文件
-    QTextStream out(&file);
-    out << outputText;
-
+    out.flush();  // 确保数据写入
+    outFile.close();
+    jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
-    fclose(infile);
-    file.close();
-    QMessageBox::information(this, "Success", "Success saved!");
-
+    QMessageBox::information(this, "Success", "DCT coefficients successfully saved!");
 }
+
+
+
 

@@ -192,9 +192,10 @@ public:
         if (!isJPEG(input_filename)) {
             return;
         }
+        data.clear();
 
         std::vector<std::vector<std::vector<std::array<short, 64>>>> dct_coefficients;
-        read_dct_coefficients(input_filename, dct_coefficients);
+        struct jpeg_decompress_struct srcinfo = read_dct_coefficients(input_filename, dct_coefficients);
         uint16_t length = 0;
         size_t count = 0;
 
@@ -247,7 +248,8 @@ public:
             current_byte <<= (8 - bit_position); // Left-align remaining bits in the last byte
             data.push_back(current_byte);
         }
-
+        //std::vector<std::vector<std::vector<std::array<short, 64>>>>().swap(dct_coefficients);
+        jpeg_destroy_decompress(&srcinfo);
     }
 
 };

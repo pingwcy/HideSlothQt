@@ -143,6 +143,7 @@ void MainWindow::on_pushButton_2_clicked()
             extractDataraw = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(extractDataraw.size()));
             if (extractDataraw.size()<1){
                 QMessageBox::information(this,QString::fromStdString("Fail"),QString::fromStdString("Fail to decrypt!"));
+                //extractDataraw.clear();
                 return;
             }
         }
@@ -160,9 +161,11 @@ void MainWindow::on_pushButton_2_clicked()
                 file.write(byteData);
             }
             file.close();
+            //extractDataraw.clear();
         }
         else{
             ui->TextIO->setText(QString::fromUtf8(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size())));
+            //extractDataraw.clear();
         }
         QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("Success Decode!"));
     }
@@ -309,6 +312,7 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_adv_btn_clicked()
 {
     Dialog *dialog = new Dialog();
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->exec();
 }
 
@@ -316,11 +320,14 @@ void MainWindow::on_actionAdvanced_Settings_triggered()
 
 {
     Dialog *dialog = new Dialog();
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->exec();
 }
 
 void MainWindow::on_actionExit_triggered()
 {
+    //qApp->dumpObjectTree();
+
     this->close();
 }
 
@@ -341,12 +348,14 @@ void MainWindow::on_actionSelect_Secret_triggered()
 void MainWindow::on_actionAbout_triggered()
 {
     AboutBox *aboutbox = new AboutBox();
+    aboutbox->setAttribute(Qt::WA_DeleteOnClose); // 设置自动删除属性
     aboutbox->exec();
 }
 
 void MainWindow::on_actionDCT_Cof_Reader_triggered()
 {
     dctreader *dctreader1 = new dctreader();
+    dctreader1->setAttribute(Qt::WA_DeleteOnClose);
     dctreader1->show();
 }
 
