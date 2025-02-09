@@ -153,7 +153,6 @@ void MainWindow::on_pushButton_2_clicked()
             return {};
         });
 
-        watcher->setFuture(future);
 
         connect(watcher, &QFutureWatcher<std::vector<uint8_t>>::finished, this, [this, watcher, passwordCopy, File, Isstring]() {
             auto &settings = GlobalSettings::instance();
@@ -202,6 +201,7 @@ void MainWindow::on_pushButton_2_clicked()
 
             watcher->deleteLater();  // 释放watcher
         });
+        watcher->setFuture(future);
     }
     else if (Encode && !GlobalSettings::instance().getMode()){
         QByteArray utf8Text = PlainText.toUtf8(); // 将QString转换为QByteArray

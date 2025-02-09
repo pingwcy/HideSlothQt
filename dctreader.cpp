@@ -8,7 +8,24 @@
 #include <QStringBuilder>
 //#include <vector>
 //#include <cstdint>
+#include <QtCore/qglobal.h>
+
+#if defined(QT_VERSION) && (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+// Qt 6
+#if defined(QT_DEBUG)
+#include <qtjpegd/jpeglib.h>
+#else
+#include <qtjpeg/jpeglib.h>
+#endif
+#else
+// Qt 5
+#if defined(QT_DEBUG)
+#include <qtlibjpegd/jpeglib.h>
+#else
 #include <qtlibjpeg/jpeglib.h>
+#endif
+#endif
+
 #include <QDebug>
 #include "DCT.cpp"
 #include <QtConcurrent>

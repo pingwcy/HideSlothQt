@@ -2,9 +2,9 @@ QT       += core gui
 QT       += concurrent
 #QT -= networks qml quick
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-#QMAKE_LFLAGS += /NODEFAULTLIB:jpeg.lib /NODEFAULTLIB:libjpeg.lib /NODEFAULTLIB:jpeg62.lib
 QMAKE_PROJECT_DEPTH = 0
-QMAKE_CXXFLAGS += /utf-8
+QMAKE_CXXFLAGS += /utf-8 -std=c++17
+#QMAKE_CXXFLAGS += /fsanitize=address /INCLUDE:__asan_init
 
 CONFIG += c++17
 CONFIG += clean
@@ -19,11 +19,32 @@ QMAKE_CFLAGS_RELEASE += -MT
 
 win32 {
 INCLUDEPATH += $$PWD\include
-LIBS += -L$$PWD/lib/winsys/ -lcrypt32 -luser32 -ladvapi32 -lkernel32
-LIBS += -L$$PWD/lib/cryptolibs/win64/ -llibcryptostandalone19
+greaterThan(QT_MAJOR_VERSION, 5) {
+    # Qt 6.x 或更高版本
+    contains(QMAKE_CXXFLAGS, -MD) {
+        # 动态链接 (MD)
+        LIBS += -L$$PWD/lib/cryptolibs/win64/ -llibcryptosym
+    } else {
+        # 静态链接 (MT)
+        LIBS += -L$$PWD/lib/winsys/ -lcrypt32 -luser32 -ladvapi32 -lkernel32
+        LIBS += -L$$PWD/lib/cryptolibs/win64/ -llibcryptostandalone22
+    }
+} else {
+    # Qt 5.x 版本
+    # 判断是否使用了 -MD（动态链接运行时库）
+    contains(QMAKE_CXXFLAGS, -MD) {
+        # 动态链接 (MD)
+        LIBS += -L$$PWD/lib/cryptolibs/win64/ -llibcryptosym
+    } else {
+        # 静态链接 (MT)
+        LIBS += -L$$PWD/lib/winsys/ -lcrypt32 -luser32 -ladvapi32 -lkernel32
+        LIBS += -L$$PWD/lib/cryptolibs/win64/ -llibcryptostandalone19
+    }
+}
 }
 unix:!macx{
-LIBS += -L$$PWD/ -lcrypto -ldl
+LIBS += -L$$PWD/lib/cryptolibs/linux64/ -llibcryptolinux
+LIBS += -L$$PWD/ -ldl
 
 }
 SOURCES += \

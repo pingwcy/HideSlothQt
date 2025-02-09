@@ -1,6 +1,22 @@
 #include <stdio.h>
-//#include <jpeglibsrc/jpeglib.h>
+#include <QtCore/qglobal.h>
+
+#if defined(QT_VERSION) && (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+// Qt 6
+#if defined(QT_DEBUG)
+#include <qtjpegd/jpeglib.h>
+#else
+#include <qtjpeg/jpeglib.h>
+#endif
+#else
+// Qt 5
+#if defined(QT_DEBUG)
+#include <qtlibjpegd/jpeglib.h>
+#else
 #include <qtlibjpeg/jpeglib.h>
+#endif
+#endif
+
 #include <qfile.h>
 #include <QTextStream>
 #include <QString>

@@ -9,7 +9,7 @@ AboutBox::AboutBox(QWidget *parent)
     aboutpic.load(":/new/prefix1/about.jpg");
     ui->label_5->setPixmap(aboutpic);
     ui->label_5->setScaledContents(true);
-    ui->label_5->deleteLater();
+    //ui->label_5->deleteLater();
 }
 
 AboutBox::~AboutBox()
