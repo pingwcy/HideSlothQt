@@ -66,7 +66,7 @@ void dctreader::processDCT(const QString& jpegPath, const QString& txtPath) {
         return;
     }
 
-    if (!DCT::isJPEG(jpegPath.toUtf8().constData())) {
+    if (!DCT::isJPEG(jpegPath.toLocal8Bit().constData())) {
         QMetaObject::invokeMethod(this, [this]() {
             QMessageBox::critical(this, "Error", "Not a valid JPEG file!");
         }, Qt::QueuedConnection);

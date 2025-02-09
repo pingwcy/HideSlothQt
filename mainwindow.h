@@ -43,6 +43,10 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void on_actionAbout_Qt_triggered();
+
+    void on_actionRestart_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

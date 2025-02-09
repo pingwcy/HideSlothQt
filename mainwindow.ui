@@ -334,6 +334,7 @@
     <addaction name="actionSelect_Container"/>
     <addaction name="actionSelect_Secret"/>
     <addaction name="separator"/>
+    <addaction name="actionRestart"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuOptions">
@@ -353,6 +354,7 @@
      <string>Help</string>
     </property>
     <addaction name="actionAbout"/>
+    <addaction name="actionAbout_Qt"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuOptions"/>
@@ -388,6 +390,16 @@
   <action name="actionDCT_Cof_Reader">
    <property name="text">
     <string>DCT Cof Reader</string>
+   </property>
+  </action>
+  <action name="actionAbout_Qt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="actionRestart">
+   <property name="text">
+    <string>Restart</string>
    </property>
   </action>
  </widget>

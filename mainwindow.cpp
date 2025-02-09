@@ -23,6 +23,8 @@
 #include <dctreader.h>
 #include <QFuture>
 #include <QFutureWatcher>
+#include <QMenuBar>
+#include <QAction>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -113,11 +115,12 @@ void MainWindow::on_pushButton_2_clicked()
         //随后开启Concurrent避免阻塞GUI
         QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
         // 连接信号和槽
+        QObject::connect(watcher, &QFutureWatcher<void>::finished, watcher, &QFutureWatcher<void>::deleteLater);
         QObject::connect(watcher, &QFutureWatcher<void>::finished, this, &MainWindow::showSuccessMessage);
         //不同算法 是否加密
         QFuture<void> future = QtConcurrent::run([=]() {
             if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
-                DCT::encode_image(ContainerRoute.toUtf8().constData(), fileName2.toUtf8().constData(), GlobalSettings::instance().getEnc()? encryptedDataToVector(encryptedData): data);}
+                DCT::encode_image(ContainerRoute.toLocal8Bit().constData(), fileName2.toLocal8Bit().constData(), GlobalSettings::instance().getEnc()? encryptedDataToVector(encryptedData): data);}
             if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
                 QImage image(ContainerRoute);
                 Linear_Image::Encode(&image, GlobalSettings::instance().getEnc()? encryptedDataToVector(encryptedData): data);
@@ -294,11 +297,11 @@ void MainWindow::on_Check_Button_clicked()
     QImage image(ContainerRoute);
     QFile file(SecretRoute);
     double ImageCapa;
-    if (Linear_Image::isPNG(ContainerRoute.toStdString())){
+    if (Linear_Image::isPNG(ContainerRoute.toLocal8Bit().toStdString())){
         ImageCapa = Linear_Image::CheckSize(image);
         Capainfo += "This container's capacity is "+QString::number(ImageCapa)+" KB. ";
     }
-    else if (DCT::isJPEG(ContainerRoute.toStdString())){
+    else if (DCT::isJPEG(ContainerRoute.toLocal8Bit().toStdString())){
         ImageCapa = (image.height()*image.width()/64)*1.5/8/1024;
         Capainfo += "This container's capacity is "+QString::number(ImageCapa)+" KB. ";
     }
@@ -443,4 +446,20 @@ void MainWindow::on_pushButton_clicked()
     });} while (i<1000);
 }
 
+
+void MainWindow::on_actionAbout_Qt_triggered()
+{
+    QApplication::aboutQt();
+}
+
+
+void MainWindow::on_actionRestart_triggered()
+{
+    QString program = QCoreApplication::applicationFilePath();
+    QStringList arguments = QCoreApplication::arguments();
+
+    QProcess::startDetached(program, arguments); // 启动新的进程
+    QCoreApplication::quit(); // 退出当前进程
+
+}
 

@@ -3,51 +3,63 @@
 #include <QMessageBox>
 #include "GlobalSettings.h"
 #include <string>
+
 Dialog::Dialog(QWidget *parent)
-    : QDialog(parent)
-    , ui(new Ui::Dialog)
-{
+    : QDialog(parent), ui(new Ui::Dialog) {
     ui->setupUi(this);
-    bool workingmode = GlobalSettings::instance().getMode();
-    ui->radioButton_3->setChecked(workingmode);
-    ui->radioButton_4->setChecked(!workingmode);
-    bool enc = GlobalSettings::instance().getEnc();
-    ui->radioButton->setChecked((enc));
-    ui->radioButton_2->setChecked((!enc));
-    int Iterations = GlobalSettings::instance().getIter();
-    ui->lineEdit->setText(QString::number(Iterations));
-    bool csthash = GlobalSettings::instance().getCstHash();
-    ui->checkBox_2->setChecked(csthash);
-    bool cstiter = GlobalSettings::instance().getCstIter();
-    ui->checkBox->setChecked(cstiter);
-    std::string hash = GlobalSettings::instance().getHash();
-    int indexs = ui->comboBox->findText(QString::fromStdString(hash));
-    ui->comboBox->setCurrentIndex(indexs);
-    std::string encal = GlobalSettings::instance().getEncalg();
-    int indexe = ui->comboBox_2->findText(QString::fromStdString(encal));
-    ui->comboBox_2->setCurrentIndex(indexe);
-    std::string stgal = GlobalSettings::instance().getStealg();
-    int indexf = ui->comboBox_3->findText(QString::fromStdString(stgal));
-    ui->comboBox_3->setCurrentIndex(indexf);
-    bool isjpglsb = GlobalSettings::instance().getJPGLSB();
-    ui->checkBox_3->setChecked(isjpglsb);
+    loadSettings();
 }
 
-Dialog::~Dialog()
-{
+Dialog::~Dialog() {
     delete ui;
 }
 
-void Dialog::on_buttonBox_accepted()
-{
-    GlobalSettings::instance().setMode(ui->radioButton_3->isChecked());
-    GlobalSettings::instance().setEnc(ui->radioButton->isChecked());
-    GlobalSettings::instance().setCstHash(ui->checkBox_2->checkState());
-    GlobalSettings::instance().setCstIter(ui->checkBox->checkState());
-    GlobalSettings::instance().setIter(ui->lineEdit->text().toInt());
-    GlobalSettings::instance().setHash(ui->comboBox->currentText().toStdString());
-    GlobalSettings::instance().setEncalg(ui->comboBox_2->currentText().toStdString());
-    GlobalSettings::instance().setStealg(ui->comboBox_3->currentText().toStdString());
-    GlobalSettings::instance().setJPGLSB(ui->checkBox_3->isChecked());
-    QMessageBox::information(this,QString::fromStdString("Saved"),QString::fromStdString("Settings Saved!"));
+void Dialog::loadSettings() {
+    auto &settings = GlobalSettings::instance();
+
+    ui->radioButton_3->setChecked(settings.getMode());
+    ui->radioButton_4->setChecked(!settings.getMode());
+
+    ui->radioButton->setChecked(settings.getEnc());
+    ui->radioButton_2->setChecked(!settings.getEnc());
+
+    ui->lineEdit->setText(QString::number(settings.getIter()));
+
+    ui->checkBox_2->setChecked(settings.getCstHash());
+    ui->checkBox->setChecked(settings.getCstIter());
+
+    ui->checkBox_3->setChecked(settings.getJPGLSB());
+
+    setComboBoxValue(ui->comboBox, settings.getHash());
+    setComboBoxValue(ui->comboBox_2, settings.getEncalg());
+    setComboBoxValue(ui->comboBox_3, settings.getStealg());
+}
+
+void Dialog::saveSettings() {
+    auto &settings = GlobalSettings::instance();
+
+    settings.setMode(ui->radioButton_3->isChecked());
+    settings.setEnc(ui->radioButton->isChecked());
+    settings.setCstHash(ui->checkBox_2->isChecked());
+    settings.setCstIter(ui->checkBox->isChecked());
+    settings.setIter(ui->lineEdit->text().toInt());
+
+    settings.setHash(ui->comboBox->currentText().toStdString());
+    settings.setEncalg(ui->comboBox_2->currentText().toStdString());
+    settings.setStealg(ui->comboBox_3->currentText().toStdString());
+
+    settings.setJPGLSB(ui->checkBox_3->isChecked());
+
+    QMessageBox::information(this, "Saved", "Settings Saved!");
+}
+
+void Dialog::on_buttonBox_accepted() {
+    saveSettings();
+}
+
+void Dialog::setComboBoxValue(QComboBox *comboBox, const std::string &value) {
+    int index = comboBox->findText(QString::fromStdString(value));
+    if (index >= 0) {
+        comboBox->setCurrentIndex(index);
+    }
 }
