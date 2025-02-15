@@ -6,7 +6,7 @@
 #if defined(QT_DEBUG)
 #include <qtjpegd/jpeglib.h>
 #else
-#include <qtjpeg/jpeglib.h>
+#include <QtJpeg/jpeglib.h>
 #endif
 #else
 // Qt 5
@@ -58,15 +58,23 @@ public:
         struct jpeg_error_mgr jerr;
 
         FILE* infile = nullptr; // 必须先初始化为 nullptr
+#ifdef _WIN32
+        // Windows-specific code
         errno_t err = fopen_s(&infile, filename, "rb");
         if (err != 0) {
-            // 打开文件失败，处理错误
-            qDebug() << "Failed to open input file";
+            std::cerr << "Failed to open input file" << std::endl;
             return {};
-        } else {
-            // 文件打开成功，可以继续操作
         }
-
+#elif defined(__linux__) || defined(__APPLE__)
+        // Linux and macOS-specific code
+        infile = fopen(filename, "rb");
+        if (infile == nullptr) {
+            std::cerr << "Failed to open input file" << std::endl;
+            return {};
+        }
+#else
+#error "Unsupported platform"
+#endif
         cinfo.err = jpeg_std_error(&jerr);
         jpeg_create_decompress(&cinfo);
         jpeg_stdio_src(&cinfo, infile);
@@ -154,17 +162,23 @@ public:
         struct jpeg_error_mgr jerr;
 
         FILE* outfile = nullptr; // 必须先初始化为 nullptr
+#ifdef _WIN32
+        // Windows-specific code
         errno_t err = fopen_s(&outfile, output_filename, "wb");
-        qDebug() << output_filename;
         if (err != 0) {
-            // 打开文件失败，处理错误
-            qDebug() << "Failed to open output file";
-            qDebug() << err;
+            std::cerr << "Failed to open output file" << std::endl;
             return;
-        } else {
-            // 文件打开成功，可以继续操作
         }
-
+#elif defined(__linux__) || defined(__APPLE__)
+        // Linux and macOS-specific code
+        outfile = fopen(output_filename, "wb");
+        if (outfile == nullptr) {
+            std::cerr << "Failed to open output file" << output_filename << std::endl;
+            return;
+        }
+#else
+#error "Unsupported platform"
+#endif
         cinfo.err = jpeg_std_error(&jerr);
         jpeg_create_compress(&cinfo);
         jpeg_stdio_dest(&cinfo, outfile);

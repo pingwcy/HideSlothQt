@@ -25,14 +25,12 @@
 #include <QFutureWatcher>
 #include <QMenuBar>
 #include <QAction>
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     statusBar()->setStyleSheet("QStatusBar{background-color: #e8ebe9; border: 1px  #e3e6e4;}");
-
 }
 
 MainWindow::~MainWindow()

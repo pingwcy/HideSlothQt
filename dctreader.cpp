@@ -15,7 +15,7 @@
 #if defined(QT_DEBUG)
 #include <qtjpegd/jpeglib.h>
 #else
-#include <qtjpeg/jpeglib.h>
+#include <QtJpeg/jpeglib.h>
 #endif
 #else
 // Qt 5

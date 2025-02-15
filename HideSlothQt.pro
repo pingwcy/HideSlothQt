@@ -3,22 +3,22 @@ QT       += concurrent
 #QT -= networks qml quick
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QMAKE_PROJECT_DEPTH = 0
-QMAKE_CXXFLAGS += /utf-8 -std=c++17
 #QMAKE_CXXFLAGS += /fsanitize=address /INCLUDE:__asan_init
 
 CONFIG += c++17
 CONFIG += clean
 
 #The next two lines are for MSVC static link
-QMAKE_CXXFLAGS_RELEASE += -MT
-QMAKE_CFLAGS_RELEASE += -MT
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+INCLUDEPATH += $$PWD/include
 
 win32 {
-INCLUDEPATH += $$PWD\include
+QMAKE_CXXFLAGS += /utf-8 -std=c++17
+QMAKE_CXXFLAGS_RELEASE += -MT
+QMAKE_CFLAGS_RELEASE += -MT
 greaterThan(QT_MAJOR_VERSION, 5) {
     # Qt 6.x 或更高版本
     contains(QMAKE_CXXFLAGS, -MD) {
@@ -43,8 +43,10 @@ greaterThan(QT_MAJOR_VERSION, 5) {
 }
 }
 unix:!macx{
-LIBS += -L$$PWD/lib/cryptolibs/linux64/ -llibcryptolinux
+LIBS += -L$$PWD/lib/cryptolibs/linux64/ -lcryptolinux
 LIBS += -L$$PWD/ -ldl
+#QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
+#QMAKE_LFLAGS += -fsanitize=address
 
 }
 SOURCES += \
