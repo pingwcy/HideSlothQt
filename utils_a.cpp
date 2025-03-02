@@ -14,6 +14,8 @@ std::string wstringToUtf8(const std::wstring& wstr) {
     std::string strTo(size_needed, 0);
     WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
     return strTo;
+
+
 }
 }
 #else  // 非 Windows 平台提供一个空实现或错误提示
@@ -24,3 +26,19 @@ std::string wstringToUtf8(const std::wstring& wstr) {
 }
 }
 #endif
+namespace Utils{
+//加密模块中，前端保存和传递数据的结构体
+std::vector<uint8_t> encryptedDataToVector(const Utils::EncryptedData& encryptedData) {
+    std::vector<uint8_t> result;
+    // 添加 salt
+    result.insert(result.end(), encryptedData.salt.begin(), encryptedData.salt.end());
+    // 添加 iv
+    result.insert(result.end(), encryptedData.iv.begin(), encryptedData.iv.end());
+    // 添加 tag
+    result.insert(result.end(), encryptedData.tag.begin(), encryptedData.tag.end());
+    // 添加 ciphertext
+    result.insert(result.end(), encryptedData.ciphertext.begin(), encryptedData.ciphertext.end());
+    return result;
+}
+
+}

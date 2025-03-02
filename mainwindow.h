@@ -47,6 +47,10 @@ private slots:
 
     void on_actionRestart_triggered();
 
+    void on_actionBulk_Encode_triggered();
+
+    void on_actionBuld_Decode_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

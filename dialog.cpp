@@ -29,7 +29,7 @@ void Dialog::loadSettings() {
     ui->checkBox->setChecked(settings.getCstIter());
 
     ui->checkBox_3->setChecked(settings.getJPGLSB());
-
+    ui->lineEdit_2->setText(QString::fromStdString((std::to_string(settings.getBulkmin()))));
     setComboBoxValue(ui->comboBox, settings.getHash());
     setComboBoxValue(ui->comboBox_2, settings.getEncalg());
     setComboBoxValue(ui->comboBox_3, settings.getStealg());
@@ -49,7 +49,7 @@ void Dialog::saveSettings() {
     settings.setStealg(ui->comboBox_3->currentText().toStdString());
 
     settings.setJPGLSB(ui->checkBox_3->isChecked());
-
+    settings.setBulkmin(ui->lineEdit_2->text().toInt());
     QMessageBox::information(this, "Saved", "Settings Saved!");
 }
 

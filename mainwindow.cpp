@@ -29,6 +29,8 @@
 #include <DCT.cpp>
 #include <dctreader.h>
 #include "utils_a.h"
+#include "bulk_decode.h"
+#include "bulk_encode.h"
 
 //Qt主窗口初始化
 MainWindow::MainWindow(QWidget *parent)
@@ -42,19 +44,6 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-//加密模块中，前端保存和传递数据的结构体
-std::vector<uint8_t> encryptedDataToVector(const Encryption::EncryptedData& encryptedData) {
-    std::vector<uint8_t> result;
-    // 添加 salt
-    result.insert(result.end(), encryptedData.salt.begin(), encryptedData.salt.end());
-    // 添加 iv
-    result.insert(result.end(), encryptedData.iv.begin(), encryptedData.iv.end());
-    // 添加 tag
-    result.insert(result.end(), encryptedData.tag.begin(), encryptedData.tag.end());
-    // 添加 ciphertext
-    result.insert(result.end(), encryptedData.ciphertext.begin(), encryptedData.ciphertext.end());
-    return result;
 }
 //主按钮事件
 void MainWindow::on_pushButton_2_clicked()
@@ -100,7 +89,7 @@ void MainWindow::on_pushButton_2_clicked()
         //获取长度，为了加密需要
         int dataLength = static_cast<int>(data.size());
         //初始化加密后的结构体
-        Encryption::EncryptedData encryptedData;
+        Utils::EncryptedData encryptedData;
         //如果需要加密则执行
         if (GlobalSettings::instance().getEnc()){
             encryptedData = Encryption::enc(dataPtr,passwordStr.c_str(),dataLength);
@@ -145,10 +134,10 @@ void MainWindow::on_pushButton_2_clicked()
         //不同算法 是否加密
         QFuture<void> future = QtConcurrent::run([=]() {
             if (GlobalSettings::instance().getStealg()=="JPG-DCT"){
-                DCT::encode_image(containerPath.c_str(), fileNamePath.c_str(), GlobalSettings::instance().getEnc()? encryptedDataToVector(encryptedData): data);}
+                DCT::encode_image(containerPath.c_str(), fileNamePath.c_str(), GlobalSettings::instance().getEnc()? Utils::encryptedDataToVector(encryptedData): data);}
             if (GlobalSettings::instance().getStealg()=="PNG-LSB"){
                 QImage image(ContainerRoute);
-                Linear_Image::Encode(&image, GlobalSettings::instance().getEnc()? encryptedDataToVector(encryptedData): data);
+                Linear_Image::Encode(&image, GlobalSettings::instance().getEnc()?  Utils::encryptedDataToVector(encryptedData): data);
                 image.save(fileName2);
             }
         });
@@ -259,8 +248,8 @@ void MainWindow::on_pushButton_2_clicked()
         const std::vector<uint8_t> data(utf8Text.begin(), utf8Text.end()); // 使用QByteArray初始化std::vector
         const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
         int dataLength = static_cast<int>(data.size());
-        Encryption::EncryptedData encryptedData = Encryption::enc(dataPtr,passwordPtr,dataLength);
-        QByteArray byteArray(reinterpret_cast<const char*>(encryptedDataToVector(encryptedData).data()), static_cast<int>(encryptedDataToVector(encryptedData).size()));
+        Utils::EncryptedData encryptedData = Encryption::enc(dataPtr,passwordPtr,dataLength);
+        QByteArray byteArray(reinterpret_cast<const char*>( Utils::encryptedDataToVector(encryptedData).data()), static_cast<int>( Utils::encryptedDataToVector(encryptedData).size()));
         if (File && !Isstring){
             QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
             QFile file(fileName);
@@ -458,6 +447,23 @@ void MainWindow::on_actionRestart_triggered()
 
     QProcess::startDetached(program, arguments); // 启动新的进程
     QCoreApplication::quit(); // 退出当前进程
+
+}
+
+
+void MainWindow::on_actionBulk_Encode_triggered()
+{
+    bulk_encode *bken1 = new bulk_encode();
+    bken1->setAttribute(Qt::WA_DeleteOnClose);
+    bken1->show();
+}
+
+
+void MainWindow::on_actionBuld_Decode_triggered()
+{
+    bulk_decode *bken2 = new bulk_decode();
+    bken2->setAttribute(Qt::WA_DeleteOnClose);
+    bken2->show();
 
 }
 

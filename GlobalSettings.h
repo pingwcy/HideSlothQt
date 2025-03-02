@@ -37,6 +37,10 @@ public:
 
     bool getJPGLSB() const {return LSBJPG;}
     void setJPGLSB(bool newLSB) {LSBJPG = newLSB;}
+
+    int getBulkmin() const { return bulkmin; }
+    void setBulkmin(int newValue2) { bulkmin = newValue2; }
+
 private:
     GlobalSettings() {} // Constructor? (the {} brackets) are needed here.
     // The default PBKDF2 parameters
@@ -53,6 +57,7 @@ private:
     std::string encalg = "AES256-GCM";
     std::string stealg = "JPG-DCT";
     bool LSBJPG = true;
+    int bulkmin = 5; //in KB
 };
 
 #endif // GLOBALSETTINGS_H

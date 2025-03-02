@@ -1,5 +1,5 @@
 QT       += core gui
-QT       += concurrent
+QT       += concurrent sql
 #QT -= networks qml quick
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QMAKE_PROJECT_DEPTH = 0
@@ -53,6 +53,9 @@ SOURCES += \
     DCT.cpp \
     Encryption.cpp \
     aboutbox.cpp \
+    bulk_decode.cpp \
+    bulk_encode.cpp \
+    databaseviewer.cpp \
     dctreader.cpp \
     dialog.cpp \
     main.cpp \
@@ -64,6 +67,9 @@ SOURCES += \
 HEADERS += \
     GlobalSettings.h \
     aboutbox.h \
+    bulk_decode.h \
+    bulk_encode.h \
+    databaseviewer.h \
     dctreader.h \
     dialog.h \
     mainwindow.h \
@@ -71,6 +77,9 @@ HEADERS += \
 
 FORMS += \
     aboutbox.ui \
+    bulk_decode.ui \
+    bulk_encode.ui \
+    databaseviewer.ui \
     dctreader.ui \
     dialog.ui \
     mainwindow.ui

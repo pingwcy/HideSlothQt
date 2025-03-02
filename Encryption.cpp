@@ -7,14 +7,9 @@
 #include "GlobalSettings.h"
 #include <limits>
 #include <openssl/err.h>
+#include <utils_a.h>
 class Encryption{
 public:
-struct EncryptedData {
-    std::vector<unsigned char> salt;
-    std::vector<unsigned char> iv;
-    std::vector<unsigned char> tag;
-    std::vector<unsigned char> ciphertext;
-};
 
 static const EVP_MD* getEvpFunction(const std::string& hashType) {
     if (hashType == "SHA256") {
@@ -228,7 +223,7 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
         return nothing;
     }
 
-    EncryptedData result;
+    Utils::EncryptedData result;
     result.salt = std::vector<unsigned char>(ciphertext, ciphertext + 16);
     // 提取 iv (接下来的 12 字节)
     result.iv = std::vector<unsigned char>(ciphertext + 16, ciphertext + 28);
@@ -282,8 +277,8 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
     return std::move(result.ciphertext);
 }
 
-static EncryptedData enc(const unsigned char *plaintext, const char *password, int plaintextLength) {
-    EncryptedData result;
+static Utils::EncryptedData enc(const unsigned char *plaintext, const char *password, int plaintextLength) {
+    Utils::EncryptedData result;
     // 初始化salt, iv, tag和ciphertext
     result.salt.resize(16);
     result.iv.resize(12);  // 使用12字节长度的IV

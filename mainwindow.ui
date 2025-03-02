@@ -348,6 +348,9 @@
      <string>Tools</string>
     </property>
     <addaction name="actionDCT_Cof_Reader"/>
+    <addaction name="separator"/>
+    <addaction name="actionBulk_Encode"/>
+    <addaction name="actionBuld_Decode"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -400,6 +403,16 @@
   <action name="actionRestart">
    <property name="text">
     <string>Restart</string>
+   </property>
+  </action>
+  <action name="actionBulk_Encode">
+   <property name="text">
+    <string>Bulk Encode</string>
+   </property>
+  </action>
+  <action name="actionBuld_Decode">
+   <property name="text">
+    <string>Bulk Decode</string>
    </property>
   </action>
  </widget>
