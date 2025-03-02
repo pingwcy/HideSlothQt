@@ -16,7 +16,7 @@ CONFIG += clean
 INCLUDEPATH += $$PWD/include
 
 win32 {
-QMAKE_CXXFLAGS += /utf-8 -std=c++17
+QMAKE_CXXFLAGS += /utf-8
 QMAKE_CXXFLAGS_RELEASE += -MT
 QMAKE_CFLAGS_RELEASE += -MT
 greaterThan(QT_MAJOR_VERSION, 5) {
@@ -58,6 +58,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp\
     Linear_Image.cpp\
+    utils_a.cpp
 
 
 HEADERS += \
@@ -65,7 +66,8 @@ HEADERS += \
     aboutbox.h \
     dctreader.h \
     dialog.h \
-    mainwindow.h
+    mainwindow.h \
+    utils_a.h
 
 FORMS += \
     aboutbox.ui \

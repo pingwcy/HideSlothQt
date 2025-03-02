@@ -1,14 +1,17 @@
 #include "dctreader.h"
 #include "ui_dctreader.h"
+
 #include <QTextStream>
 #include <QString>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QFile>
 #include <QStringBuilder>
-//#include <vector>
-//#include <cstdint>
 #include <QtCore/qglobal.h>
+#include <QDebug>
+#include <QtConcurrent>
+#include <QFuture>
+#include <QFutureWatcher>
 
 #if defined(QT_VERSION) && (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
 // Qt 6
@@ -26,11 +29,8 @@
 #endif
 #endif
 
-#include <QDebug>
 #include "DCT.cpp"
-#include <QtConcurrent>
-#include <QFuture>
-#include <QFutureWatcher>
+#include "utils_a.h"
 
 dctreader::dctreader(QWidget *parent)
     : QWidget(parent)
@@ -50,7 +50,6 @@ void dctreader::on_pushButton_clicked()
     ui->lineEdit->setText(fileName);
 }
 
-
 void dctreader::on_pushButton_2_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this,tr("Select a empty txt to write"));
@@ -65,8 +64,13 @@ void dctreader::processDCT(const QString& jpegPath, const QString& txtPath) {
         }, Qt::QueuedConnection);
         return;
     }
+#ifdef _WIN32
+    const std::string path = Utils::wstringToUtf8(jpegPath.toStdWString());
+#else
+    const std::string path = jpegPath.toUtf8().toStdString();
+#endif
 
-    if (!DCT::isJPEG(jpegPath.toLocal8Bit().constData())) {
+    if (!DCT::isJPEG(path)) {
         QMetaObject::invokeMethod(this, [this]() {
             QMessageBox::critical(this, "Error", "Not a valid JPEG file!");
         }, Qt::QueuedConnection);
