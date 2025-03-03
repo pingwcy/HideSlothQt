@@ -231,6 +231,7 @@ static std::vector<unsigned char> dec(const unsigned char *ciphertext, const cha
     result.tag = std::vector<unsigned char>(ciphertext + 28, ciphertext + 44);
     // 提取剩余的密文
     result.ciphertext = std::vector<unsigned char>(ciphertext + 44, ciphertext + ciphertexyLength);
+    //qDebug()<<result.salt<<"  "<<result.iv<<"   "<<result.tag;
     const int keyLength = 32;
     std::vector<unsigned char> key(keyLength);
     const EVP_MD* md;

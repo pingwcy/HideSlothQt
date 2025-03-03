@@ -1,3 +1,5 @@
+#define CHUNK_SIZE (10 * 1024 * 1024) // 10MB
+
 //引用UI
 #include "mainwindow.h"
 #include "dialog.h"
@@ -233,71 +235,104 @@ void MainWindow::on_pushButton_2_clicked()
         watcher->setFuture(future);
     }
     else if (Encode && !GlobalSettings::instance().getMode()){
-        QByteArray utf8Text = PlainText.toUtf8(); // 将QString转换为QByteArray
         if (File && !Isstring){
-            QFile file(SecretRoute); // 替换为你的文件路径
-            if (file.open(QIODevice::ReadOnly)) {
-                utf8Text = file.readAll();
-            }
-            file.close();
-            QFileInfo fileInfo(SecretRoute);
-            QString fileName = fileInfo.fileName()+ "|";
-            QByteArray byteArray = fileName.toUtf8();
-            utf8Text = byteArray + utf8Text;
-        }
-        const std::vector<uint8_t> data(utf8Text.begin(), utf8Text.end()); // 使用QByteArray初始化std::vector
-        const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
-        int dataLength = static_cast<int>(data.size());
-        Utils::EncryptedData encryptedData = Encryption::enc(dataPtr,passwordPtr,dataLength);
-        QByteArray byteArray(reinterpret_cast<const char*>( Utils::encryptedDataToVector(encryptedData).data()), static_cast<int>( Utils::encryptedDataToVector(encryptedData).size()));
-        if (File && !Isstring){
+            QFile inputFile(SecretRoute);
             QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
-            QFile file(fileName);
-            if (file.open(QIODevice::WriteOnly)){
-                qint64 byteswri = file.write(byteArray);
-                if (byteswri == -1){
-                    qDebug()<<"Error to write"<<file.errorString();
-                }
-                file.close();
+            QFile outputFile(fileName);
+            if (!inputFile.open(QIODevice::ReadOnly)) {
+                qCritical() << "Can not open input file!" << inputFile.errorString();
+                return;
             }
-            QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("Success saved!"));
+
+            if (!outputFile.open(QIODevice::WriteOnly)) {
+                qCritical() << "Can not open output file!" << outputFile.errorString();
+                return;
+            }
+            QDataStream in(&inputFile);
+            QDataStream out(&outputFile);
+
+            QByteArray buffer;
+            while (!in.atEnd()) {
+                buffer = inputFile.read(CHUNK_SIZE); // 读取10MB数据
+
+                std::vector<uint8_t> data(buffer.begin(), buffer.end());
+                const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
+                int dataLength = static_cast<int>(data.size());
+
+                Utils::EncryptedData encryptedData = Encryption::enc(dataPtr, passwordPtr, dataLength);
+
+                std::vector<uint8_t> encryptedVector = Utils::encryptedDataToVector(encryptedData);
+                QByteArray processedData(reinterpret_cast<const char*>(encryptedVector.data()),
+                                     static_cast<int>(encryptedVector.size()));
+
+
+                // 将处理后的数据写入到新文件
+                out.writeRawData(processedData.constData(), processedData.size());
+
+                qDebug() << "Processed chunk of size:" << buffer.size();
+            }
+
+            inputFile.close();
+            outputFile.close();
+
+            qDebug() << "Encryption Down!";
+
         }
-        else{
-            QByteArray base64Encoded = byteArray.toBase64();
-            QString base64String = QString::fromUtf8(base64Encoded);
+        else if (Isstring && !File){
+            QByteArray utf8Text = PlainText.toUtf8();
+            std::vector<uint8_t> data(utf8Text.begin(), utf8Text.end());
+            const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(data.data());
+            int dataLength = static_cast<int>(data.size());
+
+            Utils::EncryptedData encryptedData = Encryption::enc(dataPtr, passwordPtr, dataLength);
+
+            std::vector<uint8_t> encryptedVector = Utils::encryptedDataToVector(encryptedData);
+            QByteArray byteArray(reinterpret_cast<const char*>(encryptedVector.data()),
+                                 static_cast<int>(encryptedVector.size()));
+
+            QString base64String = QString::fromUtf8(byteArray.toBase64());
+
             ui->TextIO->setText(base64String);
         }
     }
     else if (Decode && !GlobalSettings::instance().getMode()){
         if (File && !Isstring){
-            QFile file(SecretRoute); // 替换为你的文件路径
-            QByteArray byteDatar;
-            if (file.open(QIODevice::ReadOnly)) {
-                byteDatar = file.readAll();
-            }
-            file.close();
-            std::vector<uint8_t> extractDataraw(byteDatar.begin(),byteDatar.end());
-            //const std::vector<uint8_t> *extractDataraw = reinterpret_cast<const uint8_t *>(byteDatar.constData());
-            const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(extractDataraw.data());
-            extractDataraw = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(extractDataraw.size()));
-            if (extractDataraw.size()<1){
-                QMessageBox::information(this,QString::fromStdString("Fail"),QString::fromStdString("Invalid input!"));
+            QFile inputFile(SecretRoute);
+            QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"));
+            QFile outputFile(fileName);
+            if (!inputFile.open(QIODevice::ReadOnly)) {
+                qCritical() << "Can not open input file!" << inputFile.errorString();
                 return;
             }
-            QByteArray byteData(reinterpret_cast<const char*>(extractDataraw.data()), static_cast<int>(extractDataraw.size()));
-            QString Filename = "";
-            int splitIndex = byteData.indexOf('|'); // 查找 '|' 的位置
-            if (splitIndex != -1) { // 如果找到 '|'
-                Filename = QString::fromUtf8(byteData.left(splitIndex));
-                byteData = byteData.mid(splitIndex + 1);
+
+            if (!outputFile.open(QIODevice::WriteOnly)) {
+                qCritical() << "Can not open output file!" << outputFile.errorString();
+                return;
             }
-            QString fileName = QFileDialog::getSaveFileName(this,tr("Save File"),Filename);
-            QFile files(fileName);
-            if (files.open(QIODevice::WriteOnly)) {
-                files.write(byteData);
+            QDataStream in(&inputFile);
+            QDataStream out(&outputFile);
+
+            QByteArray buffer;
+            while (!in.atEnd()) {
+                buffer = inputFile.read(CHUNK_SIZE+44); // 读取10MB数据
+
+                std::vector<uint8_t> dataVector(buffer.begin(), buffer.end());
+                const unsigned char* dataPtr = reinterpret_cast<const unsigned char*>(dataVector.data());
+                dataVector = Encryption::dec(dataPtr,passwordPtr,static_cast<int>(dataVector.size()));
+
+                // 将处理后的数据写入到新文件
+                out.writeRawData(reinterpret_cast<const char*>(dataVector.data()), static_cast<int>(dataVector.size()));
+
+                qDebug() << "Processed chunk of size:" << buffer.size();
             }
-            files.close();
-            QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("Success saved!"));
+
+            inputFile.close();
+            outputFile.close();
+
+            qDebug() << "Decryption Down!";
+
+
+            QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("Success Decrypted!"));
         }
         else{
             QByteArray decodedData = QByteArray::fromBase64(PlainText.toUtf8());
