@@ -119,6 +119,10 @@ void bulk_encode:: processFileChunks(const QString &filePath, QString dbpath, st
     }
 
     while (query.next()) {
+        //qDebug() << "Query active: " << query.isActive();
+        //qDebug() << "Query valid: " << query.isValid();
+        //qDebug() << "Database open: " << db.isOpen();
+
         qint64 chunkSize = query.value(4).toLongLong()*1024;  // 获取数据库中的块大小
         //qDebug() << "处理数据块，偏移量:";
 
@@ -170,28 +174,18 @@ void bulk_encode:: processFileChunks(const QString &filePath, QString dbpath, st
         std::string fileNamePath = fileName2.toUtf8().toStdString();
 #endif
 
-        //随后开启Concurrent避免阻塞GUI
-        QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
-        // 连接信号和槽
-        QObject::connect(watcher, &QFutureWatcher<void>::finished, watcher, &QFutureWatcher<void>::deleteLater);
-        //QObject::connect(watcher, &QFutureWatcher<void>::finished, this, &bulk_encode::showSuccessMessage);
         //不同算法 是否加密
-        QFuture<void> future = QtConcurrent::run([=]() {
-            if (query.value(3).toString()=="JPG"){
-                DCT::encode_image(containerPath.c_str(), fileNamePath.c_str(), GlobalSettings::instance().getEnc()? Utils::encryptedDataToVector(encryptedData): data);}
-            if (query.value(3).toString()=="PNG"){
-                QImage image(ContainerRoute);
-                Linear_Image::Encode(&image, GlobalSettings::instance().getEnc()? Utils::encryptedDataToVector(encryptedData): data);
-                image.save(fileName2);
-            }
-        });
-        watcher->setFuture(future);
-
-
+        if (query.value(3).toString()=="JPG"){
+            DCT::encode_image(containerPath.c_str(), fileNamePath.c_str(), GlobalSettings::instance().getEnc()? Utils::encryptedDataToVector(encryptedData): data);}
+        if (query.value(3).toString()=="PNG"){
+            QImage image(ContainerRoute);
+            Linear_Image::Encode(&image, GlobalSettings::instance().getEnc()? Utils::encryptedDataToVector(encryptedData): data);
+            image.save(fileName2);
+        }
 
         // 更新偏移量
         offset += fileChunk.size();
-
+        //qDebug() <<offset<<"  "<<fileSize;
         if (offset >= fileSize) break; // 读取到文件末尾
     }
     db.close();
@@ -257,7 +251,7 @@ void bulk_encode::on_pushButton_clicked()
             if (DCT::isJPEG(stdFilePath)){
                 query.addBindValue("JPG");
                 QImage items(dirPath+"/"+fileName);
-                int itemcap = (items.height()*items.width()/64)*1.5/8/1024;
+                int itemcap = (items.height()*items.width()/64)*1.5/8/1024*0.95;
                 if (itemcap<settings2.getBulkmin()){
                     continue;
                 }

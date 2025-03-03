@@ -146,12 +146,14 @@ void bulk_decode::on_pushButton_3_clicked()
         std::map<int64_t, std::vector<uint8_t>> chunkMap;
         int64_t fileSize = -1;
         bool fileSizeSet = false;
+        qDebug() << "extractDataraw.size:" << extractDataraw.size();
 
         size_t offset = 0;
         while (offset + 16 <= extractDataraw.size()) {  // 确保至少16字节
             int64_t chunkOffset = readInt64LE(&extractDataraw[offset]);
             int64_t currentFileSize = readInt64LE(&extractDataraw[offset + 8]);
             qDebug() << "Parsed chunkOffset:" << chunkOffset;
+            qDebug() << "currentFileSize:" << currentFileSize;
 
             // 过滤无效 offset
             if (chunkOffset < 0) {
