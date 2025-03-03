@@ -149,6 +149,8 @@ public:
         if (binary_index < binary_stream.size()) {
             std::cerr << "Warning: Not all binary data was used! Remaining bits: "
                       << (binary_stream.size() - binary_index) << std::endl;
+            throw std::runtime_error("JPEG Image Over Writted, the output file is invalid!");
+
         }
 
         std::cout << "Total coefficients written: " << total_coefficients << std::endl;

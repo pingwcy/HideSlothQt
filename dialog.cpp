@@ -30,6 +30,7 @@ void Dialog::loadSettings() {
 
     ui->checkBox_3->setChecked(settings.getJPGLSB());
     ui->lineEdit_2->setText(QString::fromStdString((std::to_string(settings.getBulkmin()))));
+    ui->lineEdit_3->setText(QString::fromStdString((std::to_string(settings.getChunks()))));
     setComboBoxValue(ui->comboBox, settings.getHash());
     setComboBoxValue(ui->comboBox_2, settings.getEncalg());
     setComboBoxValue(ui->comboBox_3, settings.getStealg());
@@ -50,6 +51,8 @@ void Dialog::saveSettings() {
 
     settings.setJPGLSB(ui->checkBox_3->isChecked());
     settings.setBulkmin(ui->lineEdit_2->text().toInt());
+    settings.setChunks(ui->lineEdit_3->text().toInt());
+
     QMessageBox::information(this, "Saved", "Settings Saved!");
 }
 

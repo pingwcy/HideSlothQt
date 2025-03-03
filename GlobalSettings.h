@@ -41,6 +41,10 @@ public:
     int getBulkmin() const { return bulkmin; }
     void setBulkmin(int newValue2) { bulkmin = newValue2; }
 
+    int getChunks() const { return chunks; }
+    void setChunks(int newValue2) { chunks = newValue2; }
+
+
 private:
     GlobalSettings() {} // Constructor? (the {} brackets) are needed here.
     // The default PBKDF2 parameters
@@ -58,6 +62,7 @@ private:
     std::string stealg = "JPG-DCT";
     bool LSBJPG = true;
     int bulkmin = 5; //in KB
+    int chunks = 10;//in MB
 };
 
 #endif // GLOBALSETTINGS_H

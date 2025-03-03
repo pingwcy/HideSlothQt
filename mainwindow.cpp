@@ -1,5 +1,3 @@
-#define CHUNK_SIZE (10 * 1024 * 1024) // 10MB
-
 //引用UI
 #include "mainwindow.h"
 #include "dialog.h"
@@ -34,6 +32,7 @@
 #include "bulk_decode.h"
 #include "bulk_encode.h"
 
+
 //Qt主窗口初始化
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -50,6 +49,8 @@ MainWindow::~MainWindow()
 //主按钮事件
 void MainWindow::on_pushButton_2_clicked()
 {
+    int CHUNK_SIZE (GlobalSettings::instance().getChunks() * 1024 * 1024); // 10MB Default
+
     // 获取 密码框 的文本
     QString Password = ui->Password_Text->text();
     QByteArray passwordBytes = Password.toUtf8(); // UTF8将QString转换为QByteArray
