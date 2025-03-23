@@ -115,8 +115,11 @@ public:
         // 例如修改特定的DCT系数
         // Step 1: Convert `data` into a binary stream of 0s and 1s
         std::vector<uint8_t> binary_stream;
-        uint16_t size = static_cast<uint16_t>(data.size());
-        for (int i = 15; i >= 0; --i) {
+        uint32_t size = static_cast<uint32_t>(data.size());
+        qDebug() << size;
+
+        // 使用 32 位而不是 16 位来表示数据的大小
+        for (int i = 31; i >= 0; --i) {
             // 使用位掩码提取当前位的值
             uint8_t bit = (size >> i) & 1;
             // 将提取的位值添加到二进制流中
@@ -232,17 +235,18 @@ public:
 
         std::vector<std::vector<std::vector<std::array<short, 64>>>> dct_coefficients;
         struct jpeg_decompress_struct srcinfo = read_dct_coefficients(input_filename, dct_coefficients);
-        uint16_t length = 0;
+        uint32_t length = 0;
         size_t count = 0;
 
         for (const auto& plane : dct_coefficients) {
             for (const auto& row : plane) {
                 for (const auto& block : row) {
-                    if (count < 16) {
-                        length |= (block[63] & 1) << (15 - count); // Correctly extract bits for length
+                    if (count < 32) { // 修改为读取32位
+                        length |= (block[63] & 1) << (31 - count); // 正确提取 32 位的 length
                         ++count;
                     } else {
-                        goto done_length; // Exit the loop once length is read
+                        qDebug() << length; // 输出读取的 size
+                        goto done_length; // 一旦读取了长度就退出循环
                     }
                 }
             }
@@ -258,7 +262,7 @@ public:
         for (const auto& plane : dct_coefficients) {
             for (const auto& row : plane) {
                 for (const auto& block : row) {
-                    if (t >= 16) { // Skip the first 16 elements
+                    if (t >= 32) { // Skip the first 32 elements
                         current_byte = (current_byte << 1) | (block[63] & 1); // Extract the bit
                         ++bit_position;
 
