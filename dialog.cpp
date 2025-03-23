@@ -34,6 +34,8 @@ void Dialog::loadSettings() {
     setComboBoxValue(ui->comboBox, settings.getHash());
     setComboBoxValue(ui->comboBox_2, settings.getEncalg());
     setComboBoxValue(ui->comboBox_3, settings.getStealg());
+    setComboBoxValue(ui->comboBox_4, settings.getKDF());
+
 }
 
 void Dialog::saveSettings() {
@@ -48,6 +50,8 @@ void Dialog::saveSettings() {
     settings.setHash(ui->comboBox->currentText().toStdString());
     settings.setEncalg(ui->comboBox_2->currentText().toStdString());
     settings.setStealg(ui->comboBox_3->currentText().toStdString());
+    settings.setKDF(ui->comboBox_4->currentText().toStdString());
+
 
     settings.setJPGLSB(ui->checkBox_3->isChecked());
     settings.setBulkmin(ui->lineEdit_2->text().toInt());

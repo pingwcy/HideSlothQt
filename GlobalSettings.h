@@ -44,6 +44,9 @@ public:
     int getChunks() const { return chunks; }
     void setChunks(int newValue2) { chunks = newValue2; }
 
+    std::string getKDF() const {return kdfa;}
+    void setKDF(std::string newKDF){kdfa = newKDF;}
+
 
 private:
     GlobalSettings() {} // Constructor? (the {} brackets) are needed here.
@@ -63,6 +66,7 @@ private:
     bool LSBJPG = true;
     int bulkmin = 5; //in KB
     int chunks = 10;//in MB
+    std::string kdfa = "PBKDF2";
 };
 
 #endif // GLOBALSETTINGS_H

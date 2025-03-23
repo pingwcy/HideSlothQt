@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>597</width>
-    <height>433</height>
+    <height>550</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -74,7 +74,7 @@
      <x>310</x>
      <y>0</y>
      <width>271</width>
-     <height>251</height>
+     <height>131</height>
     </rect>
    </property>
    <property name="title">
@@ -97,74 +97,13 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>200</y>
+      <y>80</y>
       <width>100</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text">
      <string>Disabled</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBox">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>80</y>
-      <width>211</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Customize PBKDF2 Iterations</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBox_2">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>130</y>
-      <width>171</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Customize PBKDF2 Hash</string>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="comboBox">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>160</y>
-      <width>131</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <item>
-     <property name="text">
-      <string>SHA256</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>SHA384</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>SHA512</string>
-     </property>
-    </item>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>100</y>
-      <width>131</width>
-      <height>22</height>
-     </rect>
     </property>
    </widget>
    <widget class="QComboBox" name="comboBox_2">
@@ -192,9 +131,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>160</y>
+     <y>140</y>
      <width>261</width>
-     <height>91</height>
+     <height>121</height>
     </rect>
    </property>
    <property name="title">
@@ -237,7 +176,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>60</y>
+      <y>70</y>
       <width>241</width>
       <height>19</height>
      </rect>
@@ -255,7 +194,7 @@
     <rect>
      <x>10</x>
      <y>270</y>
-     <width>571</width>
+     <width>261</width>
      <height>111</height>
     </rect>
    </property>
@@ -301,8 +240,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>30</y>
+      <x>10</x>
+      <y>70</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -314,8 +253,8 @@
    <widget class="QLineEdit" name="lineEdit_3">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>30</y>
+      <x>170</x>
+      <y>70</y>
       <width>51</width>
       <height>21</height>
      </rect>
@@ -324,14 +263,147 @@
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>520</x>
-      <y>30</y>
+      <x>230</x>
+      <y>70</y>
       <width>53</width>
       <height>15</height>
      </rect>
     </property>
     <property name="text">
      <string>MB</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_5">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>150</y>
+     <width>271</width>
+     <height>231</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Encryption Key Derivation</string>
+   </property>
+   <widget class="QCheckBox" name="checkBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>110</y>
+      <width>211</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Customize PBKDF2 Iterations</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>140</y>
+      <width>131</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>170</y>
+      <width>171</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Customize PBKDF2 Hash</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>190</y>
+      <width>131</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text">
+      <string>SHA256</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>SHA384</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>SHA512</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>101</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>KDF Algorithm</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox_4">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>30</y>
+      <width>121</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text">
+      <string>PBKDF2</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Argon2id</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_7">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>60</y>
+      <width>141</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Argon2id Parameters</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>80</y>
+      <width>241</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Iter 10; Lane 2; Mem 2^16 (Uneditable)</string>
     </property>
    </widget>
   </widget>

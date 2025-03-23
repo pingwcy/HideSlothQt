@@ -7,7 +7,7 @@ QMAKE_PROJECT_DEPTH = 0
 
 CONFIG += c++17
 CONFIG += clean
-
+#QMAKE_LFLAGS += /LTCG
 #The next two lines are for MSVC static link
 
 # You can make your code fail to compile if it uses deprecated APIs.
@@ -19,6 +19,7 @@ win32 {
 QMAKE_CXXFLAGS += /utf-8
 QMAKE_CXXFLAGS_RELEASE += -MT
 QMAKE_CFLAGS_RELEASE += -MT
+
 greaterThan(QT_MAJOR_VERSION, 5) {
     # Qt 6.x 或更高版本
     contains(QMAKE_CXXFLAGS, -MD) {
@@ -38,7 +39,7 @@ greaterThan(QT_MAJOR_VERSION, 5) {
     } else {
         # 静态链接 (MT)
         LIBS += -L$$PWD/lib/winsys/ -lcrypt32 -luser32 -ladvapi32 -lkernel32
-        LIBS += -L$$PWD/lib/cryptolibs/win64/ -llibcryptostandalone19
+        LIBS += -L$$PWD/lib/cryptolibs/win64/ -llibcryptoalone19_341
     }
 }
 }
