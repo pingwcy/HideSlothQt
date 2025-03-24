@@ -112,6 +112,9 @@ void bulk_decode::on_pushButton_3_clicked()
     QString dirPath = ui->lineEdit->text();
     QDir dir(dirPath);
     if (!dir.exists()) {
+        QMetaObject::invokeMethod(this, [this, dirPath]() {
+            QMessageBox::warning(this, "Error", "Directory does not exist: " + dirPath);
+        }, Qt::QueuedConnection);
         qDebug() << "Directory does not exist:" << dirPath;
         return;
     }
@@ -126,6 +129,10 @@ void bulk_decode::on_pushButton_3_clicked()
         }
         else if (Linear_Image::isPNG(fullname.toStdString())){
             QImage image(fullname);
+            if (image.isNull()) {
+                qDebug() << "Error: Failed to load PNG file:" << fullname;
+                continue;
+            }
             extractDataraw = Linear_Image::Decode(image);
         }
         if (settings.getEnc()) {
@@ -222,7 +229,16 @@ void bulk_decode::on_pushButton_3_clicked()
 
         for (const auto& [chunkOffset, data] : chunkMap) {
             outFile.seekp(chunkOffset);  // 使用 seekp 定位到正确位置
+            if (outFile.fail()) {
+                std::cerr << "Error: seekp() failed at offset: " << chunkOffset << std::endl;
+                break;
+            }
             outFile.write(reinterpret_cast<const char*>(data.data()), data.size());
+            if (outFile.fail()) {
+                std::cerr << "Error: Write failed at offset: " << chunkOffset << std::endl;
+                break;
+            }
+
         }
 
 

@@ -73,6 +73,8 @@ void dctreader::processDCT(const QString& jpegPath, const QString& txtPath) {
     if (!DCT::isJPEG(path)) {
         QMetaObject::invokeMethod(this, [this]() {
             QMessageBox::critical(this, "Error", "Not a valid JPEG file!");
+            ui->pushButton_3->setEnabled(true);
+            ui->progressBar->setMaximum(1);
         }, Qt::QueuedConnection);
         return;
     }
@@ -127,7 +129,7 @@ void dctreader::processDCT(const QString& jpegPath, const QString& txtPath) {
             JBLOCKARRAY coef_blocks = (cinfo.mem->access_virt_barray)
             ((j_common_ptr)&cinfo, coef_arrays[comp], row, 1, FALSE);
 
-            if (!coef_blocks) continue;
+            if (!coef_blocks || !coef_blocks[0]) continue;  // 确保指针有效
 
             for (unsigned int col = 0; col < comp_info->width_in_blocks; col++) {
                 JBLOCK* block = coef_blocks[0] + col;
@@ -177,7 +179,6 @@ void dctreader::on_pushButton_3_clicked() {
         ui->progressBar->setMaximum(1);
         //QMessageBox::information(this, "Success", "DCT coefficients successfully saved!");
     });
-
     watcher->setFuture(future);
 }
 

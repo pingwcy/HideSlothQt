@@ -94,7 +94,14 @@ QByteArray int64ToLittleEndian(qint64 value) {
 }
 
 void bulk_encode:: processFileChunks(const QString &filePath, QString dbpath, std::string passwordStr, QString outroute) {
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlDatabase db;
+    QString connectionName = "LocalDBConnection";
+    if (QSqlDatabase::contains(connectionName)) {
+        db = QSqlDatabase::database(connectionName);
+    } else {
+        db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
+    }
+
     db.setDatabaseName(dbpath);
     if (!db.open()) {
         qDebug() << "Failed to open database:" << db.lastError().text();
@@ -118,7 +125,7 @@ void bulk_encode:: processFileChunks(const QString &filePath, QString dbpath, st
         return;
     }
 
-    while (query.next()) {
+    while (query.isActive() && query.next()) {
         //qDebug() << "Query active: " << query.isActive();
         //qDebug() << "Query valid: " << query.isValid();
         //qDebug() << "Database open: " << db.isOpen();
@@ -177,18 +184,25 @@ void bulk_encode:: processFileChunks(const QString &filePath, QString dbpath, st
         //不同算法 是否加密
         if (query.value(3).toString()=="JPG"){
             DCT::encode_image(containerPath.c_str(), fileNamePath.c_str(), GlobalSettings::instance().getEnc()? Utils::encryptedDataToVector(encryptedData): data);}
-        if (query.value(3).toString()=="PNG"){
+        else if (query.value(3).toString()=="PNG"){
             QImage image(ContainerRoute);
+            if (image.isNull()) {
+                qDebug() << "Fail to load PNG: " << ContainerRoute;
+                continue;
+            }
             Linear_Image::Encode(&image, GlobalSettings::instance().getEnc()? Utils::encryptedDataToVector(encryptedData): data);
             image.save(fileName2);
         }
-
+        else {
+        qDebug() << "Non-Image File";
+        }
         // 更新偏移量
         offset += fileChunk.size();
         //qDebug() <<offset<<"  "<<fileSize;
         if (offset >= fileSize) break; // 读取到文件末尾
     }
     db.close();
+    QSqlDatabase::removeDatabase(connectionName);
     file.close();
 }
 
@@ -199,6 +213,7 @@ void bulk_encode::on_pushButton_clicked()
     if (secfile.exists()) {
         qint64 size = secfile.size(); // 获取文件大小
         fileSize = size/1024;
+        secfile.close();
     }
 
     auto &settings2 = GlobalSettings::instance();
@@ -212,7 +227,13 @@ void bulk_encode::on_pushButton_clicked()
     QStringList fileList = dir.entryList(QDir::Files);
 
     // 连接 SQLite 数据库
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlDatabase db;
+    QString connectionName = "LocalDBConnection";
+    if (QSqlDatabase::contains(connectionName)) {
+        db = QSqlDatabase::database(connectionName);
+    } else {
+        db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
+    }
     QString dbPath = QCoreApplication::applicationDirPath() + "/images.db";
     db.setDatabaseName(dbPath);
 
@@ -221,8 +242,7 @@ void bulk_encode::on_pushButton_clicked()
         return;
     }
 
-    QSqlQuery query;
-
+    QSqlQuery query(db);
     // 创建表（如存在则删除）
     query.exec("DROP TABLE IF EXISTS Images");
     if (!query.exec("CREATE TABLE Images (ID INTEGER PRIMARY KEY AUTOINCREMENT, Path TEXT, Filename TEXT, FType TEXT, Capacity TEXT)")) {
@@ -231,15 +251,19 @@ void bulk_encode::on_pushButton_clicked()
     }
 
     int count = 0;
+    db.transaction();
+
     for (const QString& fileName : fileList) {
         QString filePath = dir.absoluteFilePath(fileName);
         std::string stdFilePath = filePath.toStdString();
+        bool isPNG = Linear_Image::isPNG(stdFilePath);
+        bool isJPEG = DCT::isJPEG(stdFilePath);
 
-        if (DCT::isJPEG(stdFilePath) || Linear_Image::isPNG(stdFilePath)) {
+        if (isPNG || isJPEG) {
             query.prepare("INSERT INTO Images (Path, Filename, FType, Capacity) VALUES (?, ?, ?, ?)");
             query.addBindValue(dirPath);
             query.addBindValue(fileName);
-            if (Linear_Image::isPNG(stdFilePath)) {
+            if (isPNG) {
                 query.addBindValue("PNG");
                 QImage items(dirPath+"/"+fileName);
                 int itemcap = Linear_Image::CheckSize(items);
@@ -248,7 +272,7 @@ void bulk_encode::on_pushButton_clicked()
                 }
                 query.addBindValue(itemcap);
             }
-            if (DCT::isJPEG(stdFilePath)){
+            else if (isJPEG){
                 query.addBindValue("JPG");
                 QImage items(dirPath+"/"+fileName);
                 int itemcap = (items.height()*items.width()/64)*1.5/8/1024*0.95;
@@ -264,13 +288,16 @@ void bulk_encode::on_pushButton_clicked()
             }
         }
     }
+    db.commit();
 
     qDebug() << "Inserted" << count << "files into database.";
     int sum2 = 0;
     if (query.exec("SELECT SUM(Capacity) FROM Images")) {
-        if (query.next()) {  // 移动到结果的第一行
-            sum2 = query.value(0).toInt();  // 获取 SUM 结果
-            qDebug() << "Total sum of my_column:" << sum2;
+        if (query.next() && !query.value(0).isNull()) { // 检查是否有值
+            sum2 = query.value(0).toInt();
+            qDebug() << "Total sum of Capacity:" << sum2;
+        } else {
+            qDebug() << "No data found in Images table.";
         }
     } else {
         qDebug() << "Query execution error:" << query.lastError().text();
@@ -284,6 +311,7 @@ void bulk_encode::on_pushButton_clicked()
         QMessageBox::critical(this,QString::fromStdString("No enough capacity"),QString::fromStdString("The container capacity is NOT enough!"));
     }
     db.close();
+    QSqlDatabase::removeDatabase(connectionName);
 
 }
 

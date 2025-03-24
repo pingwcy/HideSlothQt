@@ -50,7 +50,9 @@ private slots:
     void on_actionBulk_Encode_triggered();
 
     void on_actionBuld_Decode_triggered();
-
+    void runAsyncTask(std::function<void()> , std::function<void()> );
+    void handleEncodeMode(bool File, bool Isstring, const QString SecretRoute, QString PlainText,std::string passwordStr);
+    void handleDecodeMode(bool File, bool Isstring, const QString SecretRoute, QString PlainText,std::string passwordStr);
 private:
     Ui::MainWindow *ui;
 };

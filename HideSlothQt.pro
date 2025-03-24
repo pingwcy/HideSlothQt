@@ -59,11 +59,11 @@ SOURCES += \
     databaseviewer.cpp \
     dctreader.cpp \
     dialog.cpp \
+    logicmain.cpp \
     main.cpp \
     mainwindow.cpp\
     Linear_Image.cpp\
     utils_a.cpp
-
 
 HEADERS += \
     GlobalSettings.h \
@@ -73,6 +73,7 @@ HEADERS += \
     databaseviewer.h \
     dctreader.h \
     dialog.h \
+    logicmain.h \
     mainwindow.h \
     utils_a.h
 
