@@ -26,7 +26,7 @@
 #include "Linear_Image.cpp"
 #include "Encryption.cpp"
 #include "GlobalSettings.h"
-#include <DCT.cpp>
+#include <src/DCT.cpp>
 #include <dctreader.h>
 #include "utils_a.h"
 #include "bulk_decode.h"

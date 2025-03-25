@@ -7,6 +7,7 @@ QMAKE_PROJECT_DEPTH = 0
 
 CONFIG += c++17
 CONFIG += clean
+CONFIG += console
 #QMAKE_LFLAGS += /LTCG
 #The next two lines are for MSVC static link
 
@@ -51,40 +52,40 @@ LIBS += -L$$PWD/ -ldl
 
 }
 SOURCES += \
-    DCT.cpp \
-    Encryption.cpp \
-    aboutbox.cpp \
-    bulk_decode.cpp \
-    bulk_encode.cpp \
-    databaseviewer.cpp \
-    dctreader.cpp \
-    dialog.cpp \
-    logicmain.cpp \
-    main.cpp \
-    mainwindow.cpp\
-    Linear_Image.cpp\
-    utils_a.cpp
+    src\DCT.cpp \
+    src\Encryption.cpp \
+    src\aboutbox.cpp \
+    src\bulk_decode.cpp \
+    src\bulk_encode.cpp \
+    src\databaseviewer.cpp \
+    src\dctreader.cpp \
+    src\dialog.cpp \
+    src\logicmain.cpp \
+    src\main.cpp \
+    src\mainwindow.cpp\
+    src\Linear_Image.cpp\
+    src\utils_a.cpp
 
 HEADERS += \
-    GlobalSettings.h \
-    aboutbox.h \
-    bulk_decode.h \
-    bulk_encode.h \
-    databaseviewer.h \
-    dctreader.h \
-    dialog.h \
-    logicmain.h \
-    mainwindow.h \
-    utils_a.h
+    include\GlobalSettings.h \
+    include\aboutbox.h \
+    include\bulk_decode.h \
+    include\bulk_encode.h \
+    include\databaseviewer.h \
+    include\dctreader.h \
+    include\dialog.h \
+    include\logicmain.h \
+    include\mainwindow.h \
+    include\utils_a.h
 
 FORMS += \
-    aboutbox.ui \
-    bulk_decode.ui \
-    bulk_encode.ui \
-    databaseviewer.ui \
-    dctreader.ui \
-    dialog.ui \
-    mainwindow.ui
+    forms\aboutbox.ui \
+    forms\bulk_decode.ui \
+    forms\bulk_encode.ui \
+    forms\databaseviewer.ui \
+    forms\dctreader.ui \
+    forms\dialog.ui \
+    forms\mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

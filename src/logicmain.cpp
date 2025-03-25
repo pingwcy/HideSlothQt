@@ -1,7 +1,7 @@
 #include "logicmain.h"
 #include <QString>
 #include <utils_a.h>
-#include <Encryption.cpp>
+#include <src/Encryption.cpp>
 #include <QFile>
 #include <QDataStream>
 #include <QFileInfo>
@@ -196,7 +196,7 @@ QString decryptString(QString PlainText, std::string pwd){
 void encryptFile(const QString &inputPath, const QString &outputPath, std::string pwd) {
     QFile inputFile(inputPath);
     QFile outputFile(outputPath);
-    int CHUNK_SIZE (GlobalSettings::instance().getChunks() * 1024 * 1024); // 10MB Default
+    //int CHUNK_SIZE (GlobalSettings::instance().getChunks() * 1024 * 1024); // 10MB Default
 
     if (!inputFile.open(QIODevice::ReadOnly)) {
         qCritical() << "Cannot open input file!" << inputFile.errorString();
