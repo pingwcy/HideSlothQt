@@ -37,26 +37,28 @@ void bulk_encode::loadSettings() {
         info += "Encryption: OFF;  ";
 
     }
-    if (settings.getCstHash()){
-        info += "Hash Alg: ";
-        info += QString::fromStdString(settings.getHash());
-        info += ";  ";
-    }
-    else{
-        info += "Hash Alg: ";
-        info += QString::fromStdString(settings.getDefhash());
-        info += ";  ";
-    }
+    if (settings.getKDF() == "PBKDF2") {
+        if (settings.getCstHash()) {
+            info += "Hash Alg: ";
+            info += QString::fromStdString(settings.getHash());
+            info += ";  ";
+        } else {
+            info += "Hash Alg: ";
+            info += QString::fromStdString(settings.getDefhash());
+            info += ";  ";
+        }
 
-    if (settings.getCstIter()){
-        info += "Hash Iter: ";
-        info += QString::fromStdString(std::to_string(settings.getIter()));
-        info += ";  ";
-    }
-    else{
-        info += "Hash Iter: ";
-        info += QString::fromStdString(std::to_string(settings.getDefIter()));
-        info += ";  ";
+        if (settings.getCstIter()) {
+            info += "Hash Iter: ";
+            info += QString::fromStdString(std::to_string(settings.getIter()));
+            info += ";  ";
+        } else {
+            info += "Hash Iter: ";
+            info += QString::fromStdString(std::to_string(settings.getDefIter()));
+            info += ";  ";
+        }
+    } else if (settings.getKDF() == "Argon2id") {
+        info += "Argon2id; ";
     }
     info += "Encryption alg: ";
     info += QString::fromStdString(settings.getEncalg());
@@ -208,112 +210,102 @@ void bulk_encode:: processFileChunks(const QString &filePath, QString dbpath, st
 
 void bulk_encode::on_pushButton_clicked()
 {
-    QFile secfile(ui->lineEdit->text());
-    int fileSize = 0;
-    if (secfile.exists()) {
-        qint64 size = secfile.size(); // 获取文件大小
-        fileSize = size/1024;
-        secfile.close();
-    }
-
-    auto &settings2 = GlobalSettings::instance();
+    ui->pushButton->setEnabled(false); // 禁用按钮，防止重复点击
+    ui->progressBar->setMaximum(0);
+    QString secFilePath = ui->lineEdit->text();
     QString dirPath = ui->lineEdit_2->text();
-    QDir dir(dirPath);
-    if (!dir.exists()) {
-        qDebug() << "Directory does not exist:" << dirPath;
-        return;
-    }
-    // 只获取文件，排除子目录
-    QStringList fileList = dir.entryList(QDir::Files);
+    auto &settings2 = GlobalSettings::instance();
+    int setcap = settings2.getBulkmin();
 
-    // 连接 SQLite 数据库
-    QSqlDatabase db;
-    QString connectionName = "LocalDBConnection";
-    if (QSqlDatabase::contains(connectionName)) {
-        db = QSqlDatabase::database(connectionName);
-    } else {
-        db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
-    }
-    QString dbPath = QCoreApplication::applicationDirPath() + "/images.db";
-    db.setDatabaseName(dbPath);
+    QFutureWatcher<int> *watcher = new QFutureWatcher<int>(this);
+    connect(watcher, &QFutureWatcher<int>::finished, this, [this, watcher]() {
+        ui->progressBar->setMaximum(1);
+        int sum2 = watcher->result();
+        watcher->deleteLater();
 
-    if (!db.open()) {
-        qDebug() << "Failed to open database:" << db.lastError().text();
-        return;
-    }
+        ui->pushButton->setEnabled(true);
 
-    QSqlQuery query(db);
-    // 创建表（如存在则删除）
-    query.exec("DROP TABLE IF EXISTS Images");
-    if (!query.exec("CREATE TABLE Images (ID INTEGER PRIMARY KEY AUTOINCREMENT, Path TEXT, Filename TEXT, FType TEXT, Capacity TEXT)")) {
-        qDebug() << "Failed to create table:" << query.lastError().text();
-        return;
-    }
-
-    int count = 0;
-    db.transaction();
-
-    for (const QString& fileName : fileList) {
-        QString filePath = dir.absoluteFilePath(fileName);
-        std::string stdFilePath = filePath.toStdString();
-        bool isPNG = Linear_Image::isPNG(stdFilePath);
-        bool isJPEG = DCT::isJPEG(stdFilePath);
-
-        if (isPNG || isJPEG) {
-            query.prepare("INSERT INTO Images (Path, Filename, FType, Capacity) VALUES (?, ?, ?, ?)");
-            query.addBindValue(dirPath);
-            query.addBindValue(fileName);
-            if (isPNG) {
-                query.addBindValue("PNG");
-                QImage items(dirPath+"/"+fileName);
-                int itemcap = Linear_Image::CheckSize(items);
-                if (itemcap<settings2.getBulkmin()){
-                    continue;
-                }
-                query.addBindValue(itemcap);
-            }
-            else if (isJPEG){
-                query.addBindValue("JPG");
-                QImage items(dirPath+"/"+fileName);
-                int itemcap = (items.height()*items.width()/64)*1.5/8/1024*0.95;
-                if (itemcap<settings2.getBulkmin()){
-                    continue;
-                }
-                query.addBindValue(itemcap);
-            }
-            if (!query.exec()) {
-                qDebug() << "Failed to insert data:" << query.lastError().text();
-            } else {
-                count++;
-            }
-        }
-    }
-    db.commit();
-
-    qDebug() << "Inserted" << count << "files into database.";
-    int sum2 = 0;
-    if (query.exec("SELECT SUM(Capacity) FROM Images")) {
-        if (query.next() && !query.value(0).isNull()) { // 检查是否有值
-            sum2 = query.value(0).toInt();
-            qDebug() << "Total sum of Capacity:" << sum2;
+        if (sum2 > 0) {
+            ui->pushButton_5->setEnabled(true);
+            QMessageBox::information(this, "Success", "The container capacity is enough!");
         } else {
-            qDebug() << "No data found in Images table.";
+            ui->pushButton_5->setEnabled(false);
+            QMessageBox::critical(this, "No enough capacity", "The container capacity is NOT enough!");
         }
-    } else {
-        qDebug() << "Query execution error:" << query.lastError().text();
-    }
-    if (sum2>fileSize){
-        ui->pushButton_5->setEnabled(true);
-        QMessageBox::information(this,QString::fromStdString("Success"),QString::fromStdString("The container capacity is enough!"));
-    }
-    else{
-        ui->pushButton_5->setEnabled(false);
-        QMessageBox::critical(this,QString::fromStdString("No enough capacity"),QString::fromStdString("The container capacity is NOT enough!"));
-    }
-    db.close();
-    QSqlDatabase::removeDatabase(connectionName);
+    });
 
+    QFuture<int> future = QtConcurrent::run([secFilePath, dirPath, setcap]() -> int {
+        QFile secfile(secFilePath);
+        int fileSize = 0;
+        if (secfile.exists()) {
+            fileSize = secfile.size() / 1024;
+            secfile.close();
+        }
+
+        QDir dir(dirPath);
+        if (!dir.exists()) {
+            qDebug() << "Directory does not exist:" << dirPath;
+            return 0;
+        }
+
+        QStringList fileList = dir.entryList(QDir::Files);
+
+        QSqlDatabase db(QSqlDatabase::addDatabase("QSQLITE"));
+        db.setDatabaseName(QCoreApplication::applicationDirPath() + "/images.db");
+        if (!db.open()) {
+            qDebug() << "Failed to open database:" << db.lastError().text();
+            return 0;
+        }
+
+        QSqlQuery query(db);
+        query.exec("DROP TABLE IF EXISTS Images");
+        query.exec("CREATE TABLE Images (ID INTEGER PRIMARY KEY AUTOINCREMENT, Path TEXT, Filename TEXT, FType TEXT, Capacity TEXT)");
+        db.transaction();
+
+        int count = 0;
+        for (const QString &fileName : fileList) {
+            QString filePath = dir.absoluteFilePath(fileName);
+            bool isPNG = Linear_Image::isPNG(filePath.toStdString());
+            bool isJPEG = DCT::isJPEG(filePath.toStdString());
+
+            if (isPNG || isJPEG) {
+                query.prepare("INSERT INTO Images (Path, Filename, FType, Capacity) VALUES (?, ?, ?, ?)");
+                query.addBindValue(dirPath);
+                query.addBindValue(fileName);
+                QImage items(filePath);
+                int itemcap = 0;
+
+                if (isPNG) {
+                    query.addBindValue("PNG");
+                    itemcap = Linear_Image::CheckSize(items);
+                } else if (isJPEG) {
+                    query.addBindValue("JPG");
+                    itemcap = (items.height() * items.width() / 64) * 1.5 / 8 / 1024 * 0.95;
+                }
+
+                if (itemcap < setcap) continue;
+                query.addBindValue(itemcap);
+
+                if (query.exec()) {
+                    count++;
+                } else {
+                    qDebug() << "Failed to insert data:" << query.lastError().text();
+                }
+            }
+        }
+        db.commit();
+
+        int sum2 = 0;
+        if (query.exec("SELECT SUM(Capacity) FROM Images") && query.next()) {
+            sum2 = query.value(0).toInt();
+        }
+        db.close();
+        return (sum2 > fileSize) ? sum2 : 0;
+    });
+
+    watcher->setFuture(future);
 }
+
 
 
 void bulk_encode::on_pushButton_7_clicked()
@@ -349,14 +341,29 @@ void bulk_encode::on_pushButton_4_clicked()
 
 void bulk_encode::on_pushButton_5_clicked()
 {
+    // 禁用按钮防止重复点击
+    ui->pushButton_5->setEnabled(false);
+    ui->progressBar->setMaximum(0);
     // 获取 密码框 的文本
     QString Password = ui->lineEdit_3->text();
     QByteArray passwordBytes = Password.toUtf8(); // UTF8将QString转换为QByteArray
     std::string passwordStr = passwordBytes.toStdString(); // 确保数据有效避免悬挂
-    //const char* passwordPtr = passwordStr.c_str(); // 使用 std::string 管理生命周期
+
     QString outr = ui->lineEdit_4->text();
     QString dbPath = QCoreApplication::applicationDirPath() + "/images.db";
-    processFileChunks(ui->lineEdit->text(), dbPath, passwordStr, outr);
+    QString inputPath = ui->lineEdit->text();
+
+    // 运行在后台线程，避免主线程卡死
+    QtConcurrent::run([=]() {
+        processFileChunks(inputPath, dbPath, passwordStr, outr);
+
+        // 回到主线程更新UI
+        QMetaObject::invokeMethod(ui->pushButton_5, "setEnabled", Qt::QueuedConnection, Q_ARG(bool, true));
+        QMetaObject::invokeMethod(this, [=]() {
+            ui->progressBar->setMaximum(1);
+            QMessageBox::information(nullptr, "Done", "Buld Encode Done!");
+        }, Qt::QueuedConnection);
+    });
 }
 
 

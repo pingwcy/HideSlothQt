@@ -29,6 +29,8 @@ private slots:
 private:
     Ui::bulk_decode *ui;
     void loadSettings();
+    void processdecode(std::string, std::string, QString, bool);
+
 };
 
 #endif // BULK_DECODE_H
