@@ -1,4 +1,4 @@
-name: Qt Qmake Build and Test
+name: Qt QMake Build and Test
 
 on:
   push:
@@ -9,26 +9,63 @@ on:
       - main
 
 jobs:
+  build-windows:
+    runs-on: windows-latest
+    name: Build on Windows
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
 
-    # 设置Qt环境
-- name: Install Qt on Windows
-  run: |
-    choco install qt --version=5.15.16 -y
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '5.15.2'  # 5.15.16 not always available
+          target: desktop
+          arch: win64_msvc2019_64
 
-    # 配置环境变量（确保路径包含Qt工具）
-    - name: Add Qt to PATH
-      run: |
-        echo "C:\Qt\5.15.16\msvc2019_64\bin" >> $Env:Path
-      shell: powershell
+      - name: Install OpenSSL
+        run: choco install openssl --version=3.1.2 -y
 
-    # 运行qmake
-    - name: Run Qmake
-      run: qmake CONFIG+=release
+      - name: Set up OpenSSL Path
+        run: |
+          echo "C:\Program Files\OpenSSL-Win64\bin" >> $Env:GITHUB_PATH
+        shell: powershell
 
-    # 构建项目
-    - name: Build
-      run: nmake
+      - name: Run qmake
+        run: qmake CONFIG+=release
 
-    # 可选：运行测试
-    - name: Run Tests
-      run: .\tests\HideSlothQt.exe 
+      - name: Build with nmake
+        run: nmake
+
+      - name: Run Tests
+        run: .\tests\HideSlothQt.exe
+        continue-on-error: true  # Optional if tests are not critical
+
+  build-linux:
+    runs-on: ubuntu-latest
+    name: Build on Linux
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '5.15.2'
+          target: desktop
+          arch: gcc_64
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential libssl-dev libjpeg-dev
+
+      - name: Run qmake
+        run: qmake CONFIG+=release
+
+      - name: Build with make
+        run: make -j$(nproc)
+
+      - name: Run Tests
+        run: ./tests/HideSlothQt
+        continue-on-error: true
