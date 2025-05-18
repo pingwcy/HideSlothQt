@@ -23,13 +23,13 @@ jobs:
           target: desktop
           arch: win64_msvc2019_64
 
-      - name: Install OpenSSL
-        run: choco install openssl --version=3.1.2 -y
+      #- name: Install OpenSSL
+      #  run: choco install openssl --version=3.1.2 -y
 
-      - name: Set up OpenSSL Path
-        run: |
-          echo "C:\Program Files\OpenSSL-Win64\bin" >> $Env:GITHUB_PATH
-        shell: powershell
+      #- name: Set up OpenSSL Path
+      #  run: |
+      #    echo "C:\Program Files\OpenSSL-Win64\bin" >> $Env:GITHUB_PATH
+      #  shell: powershell
 
       - name: Run qmake
         run: qmake CONFIG+=release

@@ -52,40 +52,40 @@ LIBS += -L$$PWD/ -ldl
 
 }
 SOURCES += \
-    src\DCT.cpp \
-    src\Encryption.cpp \
-    src\aboutbox.cpp \
-    src\bulk_decode.cpp \
-    src\bulk_encode.cpp \
-    src\databaseviewer.cpp \
-    src\dctreader.cpp \
-    src\dialog.cpp \
-    src\logicmain.cpp \
-    src\main.cpp \
-    src\mainwindow.cpp\
-    src\Linear_Image.cpp\
-    src\utils_a.cpp
+    src/DCT.cpp \
+    src/Encryption.cpp \
+    src/aboutbox.cpp \
+    src/bulk_decode.cpp \
+    src/bulk_encode.cpp \
+    src/databaseviewer.cpp \
+    src/dctreader.cpp \
+    src/dialog.cpp \
+    src/logicmain.cpp \
+    src/main.cpp \
+    src/mainwindow.cpp\
+    src/Linear_Image.cpp\
+    src/utils_a.cpp
 
 HEADERS += \
-    include\GlobalSettings.h \
-    include\aboutbox.h \
-    include\bulk_decode.h \
-    include\bulk_encode.h \
-    include\databaseviewer.h \
-    include\dctreader.h \
-    include\dialog.h \
-    include\logicmain.h \
-    include\mainwindow.h \
-    include\utils_a.h
+    include/GlobalSettings.h \
+    include/aboutbox.h \
+    include/bulk_decode.h \
+    include/bulk_encode.h \
+    include/databaseviewer.h \
+    include/dctreader.h \
+    include/dialog.h \
+    include/logicmain.h \
+    include/mainwindow.h \
+    include/utils_a.h
 
 FORMS += \
-    forms\aboutbox.ui \
-    forms\bulk_decode.ui \
-    forms\bulk_encode.ui \
-    forms\databaseviewer.ui \
-    forms\dctreader.ui \
-    forms\dialog.ui \
-    forms\mainwindow.ui
+    forms/aboutbox.ui \
+    forms/bulk_decode.ui \
+    forms/bulk_encode.ui \
+    forms/databaseviewer.ui \
+    forms/dctreader.ui \
+    forms/dialog.ui \
+    forms/mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
