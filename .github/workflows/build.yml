@@ -22,6 +22,8 @@ jobs:
           version: '5.15.2'  # 5.15.16 not always available
           target: desktop
           arch: win64_msvc2019_64
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
 
       #- name: Install OpenSSL
       #  run: choco install openssl --version=3.1.2 -y
@@ -41,31 +43,31 @@ jobs:
         run: .\tests\HideSlothQt.exe
         continue-on-error: true  # Optional if tests are not critical
 
-  build-linux:
-    runs-on: ubuntu-latest
-    name: Build on Linux
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
+  #build-linux:
+  #  runs-on: ubuntu-latest
+  #  name: Build on Linux
+  #  steps:
+  #    - name: Checkout source
+  #      uses: actions/checkout@v3
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: '5.15.2'
-          target: desktop
-          arch: gcc_64
+  #    - name: Install Qt
+  #      uses: jurplel/install-qt-action@v3
+  #      with:
+  #        version: '5.15.2'
+  #        target: desktop
+  #        arch: gcc_64
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y build-essential libssl-dev libjpeg-dev
+  #    - name: Install dependencies
+  #      run: |
+  #        sudo apt update
+  #        sudo apt install -y build-essential libssl-dev libjpeg-dev
 
-      - name: Run qmake
-        run: qmake CONFIG+=release
+  #    - name: Run qmake
+  #      run: qmake CONFIG+=release
 
-      - name: Build with make
-        run: make -j$(nproc)
+  #    - name: Build with make
+  #      run: make -j$(nproc)
 
-      - name: Run Tests
-        run: ./tests/HideSlothQt
-        continue-on-error: true
+  #    - name: Run Tests
+  #      run: ./tests/HideSlothQt
+  #      continue-on-error: true
